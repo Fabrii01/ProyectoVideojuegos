@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI; // Nueva librería necesaria para el Slider
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
@@ -73,6 +74,15 @@ public class PlayerController : MonoBehaviour
     {
         Debug.Log("Saliendo del simulador médico...");
         Application.Quit(); // Esta función cierra el juego cuando está exportado
+    }
+    public void VolverAlHub()
+    {
+        // Es vital restaurar el tiempo a 1 antes de cambiar de escena, 
+        // de lo contrario, el menú principal cargaría congelado.
+        Time.timeScale = 1f; 
+        
+        // Cargamos la escena inicial usando su nombre exacto
+        SceneManager.LoadScene("Hub");
     }
 
     // Detección de colisiones físicas (chocar contra paredes, suelo u obstáculos)
