@@ -19,16 +19,27 @@ public class PlayerController : MonoBehaviour
     private Rigidbody rb;
     private bool enElSuelo = true;
 
+    
     void Start()
     {
-        panelPausa.SetActive(false);
+        // Inicializar primero las físicas del jugador
         rb = GetComponent<Rigidbody>();
-        
-        // Inicializamos la vida al empezar el juego
+
+        // La interfaz es opcional en el Hub
+        if (panelPausa != null)
+        {
+            panelPausa.SetActive(false);
+        }
+
         vidaActual = vidaMaxima;
-        barraDeVida.maxValue = vidaMaxima;
-        barraDeVida.value = vidaActual;
+
+        if (barraDeVida != null)
+        {
+            barraDeVida.maxValue = vidaMaxima;
+            barraDeVida.value = vidaActual;
+        }
     }
+
 
     void Update()
     {
@@ -56,19 +67,29 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
+    
     public void PausarJuego()
     {
-        panelPausa.SetActive(true);
-        Time.timeScale = 0f; // Congela el motor de físicas y el tiempo
+        if (panelPausa != null)
+        {
+            panelPausa.SetActive(true);
+        }
+
+        Time.timeScale = 0f;
         juegoPausado = true;
     }
 
     public void ReanudarJuego()
     {
-        panelPausa.SetActive(false);
-        Time.timeScale = 1f; // Restaura el tiempo a la normalidad
+        if (panelPausa != null)
+        {
+            panelPausa.SetActive(false);
+        }
+
+        Time.timeScale = 1f;
         juegoPausado = false;
     }
+
 
     public void SalirJuego()
     {
@@ -86,21 +107,26 @@ public class PlayerController : MonoBehaviour
     }
 
     // Detección de colisiones físicas (chocar contra paredes, suelo u obstáculos)
+    
     void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.name == "Terrain")
+        if (collision.gameObject.name == "Terrain" ||
+            collision.gameObject.name == "SueloHub")
         {
             enElSuelo = true;
         }
-        
-        // Lógica de daño al chocar con un obstáculo
+
         if (collision.gameObject.CompareTag("Peligro"))
         {
-            vidaActual -= 20; // Restamos 20 puntos de vida
-            barraDeVida.value = vidaActual; // Actualizamos la interfaz
+            vidaActual = Mathf.Max(0, vidaActual - 20);
+
+            if (barraDeVida != null)
+                barraDeVida.value = vidaActual;
+
             Debug.Log("¡Recibiste daño! Vida actual: " + vidaActual);
         }
     }
+
 
     // Detección para coger objetos (triggers)
     void OnTriggerEnter(Collider otroObjeto)
@@ -108,7 +134,10 @@ public class PlayerController : MonoBehaviour
         if (otroObjeto.gameObject.CompareTag("Suministro"))
         {
             cantidadSuministros++; 
-            textoSuministros.text = "Suministros: " + cantidadSuministros; 
+            if (textoSuministros != null)
+            {
+                textoSuministros.text = "Suministros: " + cantidadSuministros;
+            }
             Destroy(otroObjeto.gameObject);
             Debug.Log("¡Suministro médico recogido!");
         }
