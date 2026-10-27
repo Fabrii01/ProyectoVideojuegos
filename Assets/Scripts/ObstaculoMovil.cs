@@ -1,46 +1,75 @@
 using UnityEngine;
 
+/// <summary>
+/// Obstáculo móvil con patrullaje lateral, velocidades variables y baliza de peligro.
+/// Causa daño al jugador al impactar.
+/// </summary>
 public class ObstaculoMovil : MonoBehaviour
 {
-    public float distancia = 4f; // Qué tan lejos viaja hacia los lados
-    public float velocidadBase = 3f; // Velocidad inicial
-    
-    private Vector3 limiteIzquierdo;
-    private Vector3 limiteDerecho;
+    [Header("Patrullaje")]
+    public float distancia = 5f;
+    public float velocidadBase = 3.5f;
+    public Vector3 direccionPatrullaje = Vector3.right;
+
+    [Header("Peligro y Efectos")]
+    public int danioAlJugador = 20;
+    public Light balizaAlerta;
+    public Color colorAlerta = new Color(1f, 0.35f, 0f);
+
+    private Vector3 limiteA;
+    private Vector3 limiteB;
     private Vector3 destinoActual;
     private float velocidadActual;
 
-    void Start()
+    private void Start()
     {
-        // Calculamos los límites del patrullaje usando la posición inicial del cubo en la escena
-        limiteIzquierdo = transform.position + Vector3.left * distancia;
-        limiteDerecho = transform.position + Vector3.right * distancia;
-        
-        destinoActual = limiteDerecho; // Comienza moviéndose a la derecha
+        gameObject.tag = "Peligro";
+
+        Vector3 offset = direccionPatrullaje.normalized * distancia;
+        limiteA = transform.position - offset;
+        limiteB = transform.position + offset;
+
+        destinoActual = limiteB;
         velocidadActual = velocidadBase;
+
+        if (balizaAlerta == null)
+        {
+            GameObject luzGO = new GameObject("BalizaPeligro");
+            luzGO.transform.SetParent(transform);
+            luzGO.transform.localPosition = Vector3.up * 0.8f;
+            balizaAlerta = luzGO.AddComponent<Light>();
+            balizaAlerta.type = LightType.Point;
+            balizaAlerta.range = 3.5f;
+            balizaAlerta.intensity = 1.8f;
+            balizaAlerta.color = colorAlerta;
+        }
     }
 
-    void Update()
+    private void Update()
     {
-        // Movemos el obstáculo constantemente hacia su destino
         transform.position = Vector3.MoveTowards(transform.position, destinoActual, velocidadActual * Time.deltaTime);
 
-        // Si el cubo llega a su destino (con un margen de 0.1 para evitar fallos de precisión)
         if (Vector3.Distance(transform.position, destinoActual) < 0.1f)
         {
-            // Cambiamos la dirección hacia el lado contrario
-            if (destinoActual == limiteDerecho)
-            {
-                destinoActual = limiteIzquierdo;
-            }
-            else
-            {
-                destinoActual = limiteDerecho;
-            }
+            destinoActual = (destinoActual == limiteB) ? limiteA : limiteB;
+            velocidadActual = Random.Range(velocidadBase * 0.8f, velocidadBase * 1.6f);
+        }
 
-            // REQUISITO DEL SÍLABO: Comportamientos aleatorios
-            // Asignamos una nueva velocidad al azar cada vez que da la vuelta para hacerlo impredecible
-            velocidadActual = Random.Range(2f, 7f); 
+        if (balizaAlerta != null)
+        {
+            balizaAlerta.intensity = 1.0f + 1.2f * Mathf.PingPong(Time.time * 4f, 1f);
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            PlayerController jugador = collision.gameObject.GetComponent<PlayerController>();
+            if (jugador != null)
+            {
+                jugador.RecibirDanio(danioAlJugador);
+            }
         }
     }
 }

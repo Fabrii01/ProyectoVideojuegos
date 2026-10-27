@@ -1,6 +1,8 @@
-
 using UnityEngine;
 
+/// <summary>
+/// Gestiona la interacción con el Médico Jefe en el Hub para desplegar misiones y niveles.
+/// </summary>
 public class NPCMedicoInteractivo : MonoBehaviour
 {
     [Header("Elementos de la interfaz")]
@@ -18,8 +20,8 @@ public class NPCMedicoInteractivo : MonoBehaviour
 
     private void Start()
     {
-        textoInteraccion.SetActive(false);
-        panelNiveles.SetActive(false);
+        if (textoInteraccion != null) textoInteraccion.SetActive(false);
+        if (panelNiveles != null) panelNiveles.SetActive(false);
     }
 
     private void Update()
@@ -40,8 +42,7 @@ public class NPCMedicoInteractivo : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             jugadorCerca = true;
-
-            if (!menuAbierto)
+            if (!menuAbierto && textoInteraccion != null)
             {
                 textoInteraccion.SetActive(true);
             }
@@ -53,19 +54,20 @@ public class NPCMedicoInteractivo : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             jugadorCerca = false;
-            textoInteraccion.SetActive(false);
+            if (textoInteraccion != null) textoInteraccion.SetActive(false);
+            if (menuAbierto) CerrarMenu();
         }
     }
 
-    private void AbrirMenu()
+    public void AbrirMenu()
     {
         menuAbierto = true;
 
         bloqueoCursorOriginal = Cursor.lockState;
         cursorVisibleOriginal = Cursor.visible;
 
-        textoInteraccion.SetActive(false);
-        panelNiveles.SetActive(true);
+        if (textoInteraccion != null) textoInteraccion.SetActive(false);
+        if (panelNiveles != null) panelNiveles.SetActive(true);
 
         if (controladorMovimiento != null)
         {
@@ -74,24 +76,34 @@ public class NPCMedicoInteractivo : MonoBehaviour
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
+        if (AudioManager.Instancia != null)
+        {
+            AudioManager.Instancia.PlayClick();
+        }
     }
 
-    private void CerrarMenu()
+    public void CerrarMenu()
     {
         menuAbierto = false;
-        panelNiveles.SetActive(false);
+        if (panelNiveles != null) panelNiveles.SetActive(false);
 
         if (controladorMovimiento != null)
         {
             controladorMovimiento.enabled = true;
         }
 
-        Cursor.lockState = bloqueoCursorOriginal;
-        Cursor.visible = cursorVisibleOriginal;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
 
-        if (jugadorCerca)
+        if (jugadorCerca && textoInteraccion != null)
         {
             textoInteraccion.SetActive(true);
+        }
+
+        if (AudioManager.Instancia != null)
+        {
+            AudioManager.Instancia.PlayClick();
         }
     }
 }
