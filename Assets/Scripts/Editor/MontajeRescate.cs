@@ -110,6 +110,7 @@ public static partial class MontajeRescate
         CrearPrefabEnemigo(RUTA_ANDROIDE, "Androide", PielAndroide, new Color(0.9f, 0.15f, 0.1f), 135, 20, 5.9f);
         CrearCascoEspacial();
         CrearCatalogo();
+        CrearBancoSalud();
 
         AssetDatabase.SaveAssets();
     }

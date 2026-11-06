@@ -37,7 +37,7 @@ public static partial class MontajeRescate
             piel = PielRescatista,
             avisos = new[]
             {
-                "Réplica de terremoto en el centro. Hay dos heridos atrapados al norte de la ciudad.",
+                "Réplica de terremoto. Al norte hay un paciente con crisis de asma y otro con una herida sucia.",
                 "Reúne jeringas y equipajes por las manzanas y llévalos a cada paciente. Mira el mapa."
             },
             leccion = "en un sismo agáchate, cúbrete y sujétate. Después aléjate de muros y vidrios dañados.",
@@ -110,8 +110,8 @@ public static partial class MontajeRescate
         Arco(g.monedas, new Vector3(0f, 0f, -26f), new Vector3(0f, 0f, -22f), 3, 1.8f);
 
         // Heridos en los lotes derrumbados del norte.
-        CrearPaciente(g.nivel, new Vector3(-34f, 0f, 36f), 40f, 2, 1, PielVecino(3));
-        CrearPaciente(g.nivel, new Vector3(36f, 0f, 36f), -30f, 2, 1, PielVecino(1));
+        CrearPaciente(g.nivel, new Vector3(-34f, 0f, 36f), 40f, 2, 1, PielVecino(3), "asma");
+        CrearPaciente(g.nivel, new Vector3(36f, 0f, 36f), -30f, 2, 1, PielVecino(1), "tetano");
         LoteDerrumbado(g.obstaculos, new Vector3(-34f, 0f, 34f));
         LoteDerrumbado(g.obstaculos, new Vector3(35f, 0f, 34f));
     }

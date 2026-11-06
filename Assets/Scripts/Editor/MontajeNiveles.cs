@@ -139,6 +139,8 @@ public static partial class MontajeRescate
         PanelPausa(canvas.transform, jugador, "VOLVER AL HUB", jugador.VolverAlHub);
         ConstruirVictoria(canvas.transform, gestor);
         ConstruirDialogo(canvas.transform);
+        ConstruirAvisoCentral(canvas.transform);
+        ConstruirFichaMedica(canvas.transform, jugador);
 
         // Los enemigos se agregan después de hornear para que no se tapen su propio camino.
         HornearNavMesh(d, g, jugadorGO);
@@ -332,7 +334,7 @@ public static partial class MontajeRescate
         }
     }
 
-    private static Paciente CrearPaciente(Transform nivel, Vector3 pos, float giro, int jeringas, int equipajes, Material piel)
+    private static Paciente CrearPaciente(Transform nivel, Vector3 pos, float giro, int jeringas, int equipajes, Material piel, string enfermedad)
     {
         GameObject raiz = new GameObject("Paciente");
         raiz.transform.SetParent(nivel, false);
@@ -342,6 +344,7 @@ public static partial class MontajeRescate
         Paciente paciente = raiz.AddComponent<Paciente>();
         paciente.jeringasRequeridas = jeringas;
         paciente.equipajesRequeridos = equipajes;
+        paciente.enfermedad = Cargar<Enfermedad>(DIR_SALUD + "/" + enfermedad + ".asset");
 
         BoxCollider zona = raiz.AddComponent<BoxCollider>();
         zona.isTrigger = true;

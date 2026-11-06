@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d11f3cae32d1ac0468eca355507c096d, type: 3}
+  m_Name: humo
+  m_EditorClassIdentifier: Assembly-CSharp::Enfermedad
+  id: humo
+  nombre: "Intoxicaci\xF3n por humo"
+  sintomas: "Tos, dolor de cabeza, mareo, confusi\xF3n y holl\xEDn en la nariz o
+    la boca."
+  tratamiento: "Lleva a la persona a un lugar con aire fresco.\nNo la dejes sola
+    y vigila su respiraci\xF3n.\nEn el hospital se le da ox\xEDgeno.\nDebe ser revisada
+    aunque parezca mejorar."
+  preguntas:
+  - texto: "\xBFQu\xE9 se hace primero con alguien intoxicado por humo?"
+    opciones:
+    - Darle de comer
+    - "Dejarlo dormir ah\xED"
+    - Llevarlo al aire fresco
+    correcta: 2
+    explicacion: Salir del humo hacia el aire fresco es lo primero.
+  - texto: "\xBFQu\xE9 gas peligroso del humo no se ve ni se huele?"
+    opciones:
+    - "Mon\xF3xido de carbono"
+    - "Ox\xEDgeno"
+    - Vapor de agua
+    correcta: 0
+    explicacion: "El mon\xF3xido de carbono no tiene color ni olor."
+  - texto: "\xBFCon qu\xE9 se trata en el hospital?"
+    opciones:
+    - Con vendajes
+    - "Con ox\xEDgeno"
+    - Con hielo en la cabeza
+    correcta: 1
+    explicacion: "El ox\xEDgeno ayuda a eliminar el gas y a recuperar la respiraci\xF3n."

@@ -144,6 +144,7 @@ public static partial class MontajeRescate
         BorrarRaiz("NPC_Tienda");
         BorrarRaiz("LetrerosHub");
         BorrarRaiz("VidaHub");
+        BorrarRaiz("NPC_Preguntas");
 
         // Cámara suelta que estaba desactivada y duplicaba la del jugador.
         foreach (GameObject objeto in escena.GetRootGameObjects())
@@ -163,16 +164,20 @@ public static partial class MontajeRescate
         AjustarEdificioHospital();
 
         GameObject medico = GameObject.Find("NPC_Medico");
-        NPCMedicoInteractivo npcMisiones = PrepararNPC(medico, new Vector3(4.2f, 0f, 3f), 200f, PielMedico, jugador);
+        NPCMedicoInteractivo npcMisiones = PrepararNPC(medico, new Vector3(13f, 0f, -0.5f), 225f, PielMedico, jugador);
 
         GameObject vendedor = new GameObject("NPC_Tienda");
-        NPCMedicoInteractivo npcTienda = PrepararNPC(vendedor, new Vector3(-9f, 0f, 3.2f), 150f, PielTendero, jugador);
+        NPCMedicoInteractivo npcTienda = PrepararNPC(vendedor, PosTienda, 130f, PielTendero, jugador);
+
+        GameObject instructora = new GameObject("NPC_Preguntas");
+        NPCMedicoInteractivo npcPreguntas = PrepararNPC(instructora, PosAula + new Vector3(1f, 0.1f, 2.4f), 190f, PielInstructora, jugador);
 
         ConstruirPuestoTienda();
 
         Transform letreros = new GameObject("LetrerosHub").transform;
-        Letrero(letreros, "LetreroMisiones", "MISIONES", new Vector3(4.2f, 2.5f, 3f), 5f, ColNaranja);
-        Letrero(letreros, "LetreroTienda", "TIENDA", new Vector3(-9f, 3.9f, 3.2f), 5f, ColOro);
+        Letrero(letreros, "LetreroMisiones", "MISIONES", new Vector3(13f, 2.5f, -0.5f), 5f, ColNaranja);
+        Letrero(letreros, "LetreroTienda", "TIENDA", PosTienda + Vector3.up * 3.9f, 5f, ColOro);
+        Letrero(letreros, "LetreroPreguntas", "AULA DE SALUD", PosAula + new Vector3(0f, 4.3f, -0.4f), 5f, new Color(0.45f, 0.9f, 1f));
 
         ConstruirVidaHub(jugadorGO);
 
@@ -181,9 +186,11 @@ public static partial class MontajeRescate
 
         npcMisiones.textoInteraccion = Aviso(canvas.transform, "AvisoMisiones", "Pulsa  E  para ver las misiones");
         npcTienda.textoInteraccion = Aviso(canvas.transform, "AvisoTienda", "Pulsa  E  para abrir la tienda");
+        npcPreguntas.textoInteraccion = Aviso(canvas.transform, "AvisoPreguntas", "Pulsa  E  para repasar lo aprendido");
 
         npcMisiones.panelNiveles = ConstruirPanelMisiones(canvas.transform, gestor, npcMisiones);
         npcTienda.panelNiveles = ConstruirPanelTienda(canvas.transform, npcTienda);
+        npcPreguntas.panelNiveles = ConstruirPanelPreguntas(canvas.transform, npcPreguntas);
 
         PanelPausa(canvas.transform, jugador, "VOLVER AL MENÚ", gestor.CargarMenuPrincipal);
 
@@ -296,8 +303,8 @@ public static partial class MontajeRescate
     private static void ConstruirPuestoTienda()
     {
         Transform raiz = new GameObject("PuestoTienda").transform;
-        raiz.position = new Vector3(-9f, 0f, 3.2f);
-        raiz.rotation = Quaternion.Euler(0f, 150f, 0f);
+        raiz.position = PosTienda;
+        raiz.rotation = Quaternion.Euler(0f, 130f, 0f);
 
         Material madera = Mat("Madera", new Color(0.42f, 0.28f, 0.16f), 0.2f);
         Material lona = Mat("LonaNaranja", new Color(0.92f, 0.45f, 0.1f), 0.2f);
@@ -336,6 +343,7 @@ public static partial class MontajeRescate
         dialogo.panel = panel;
         dialogo.textoNombre = TextoUI(panel.transform, "Nombre", "Nombre", 28f, new Vector2(0f, 1f), new Vector2(40f, -18f), new Vector2(1000f, 36f), TextAlignmentOptions.Left, ColNaranja, true);
         dialogo.textoFrase = TextoUI(panel.transform, "Frase", "", 34f, new Vector2(0f, 1f), new Vector2(40f, -60f), new Vector2(1100f, 96f), TextAlignmentOptions.TopLeft, Color.white);
+        dialogo.textoPista = TextoUI(panel.transform, "Pista", "", 22f, new Vector2(1f, 1f), new Vector2(-30f, -20f), new Vector2(300f, 32f), TextAlignmentOptions.Right, ColOro, true);
     }
 
     private static void MusicaDeEscena(string principal, string combate)
@@ -365,13 +373,13 @@ public static partial class MontajeRescate
         TextoUI(tarjeta.transform, "Titulo", "Elige tu misión", 52f, new Vector2(0f, 1f), new Vector2(58f, -70f), new Vector2(900f, 70f), TextAlignmentOptions.Left, Color.white, true);
 
         TarjetaMision(tarjeta.transform, 1, -440f, "Terremoto en el centro",
-            "Una réplica destruyó la ciudad. Hay dos heridos atrapados entre los escombros.",
+            "Una réplica destruyó la ciudad. Trata una crisis de asma y una herida con riesgo de tétanos.",
             "Media", "60 monedas", new Color(0.88f, 0.42f, 0.1f), gestor);
         TarjetaMision(tarjeta.transform, 2, 0f, "Incendio en la reserva",
-            "El fuego avanza por el bosque. Cruza el río y rescata a los campistas.",
+            "El fuego avanza. Cruza el río y atiende una intoxicación por humo y un golpe de calor.",
             "Alta", "90 monedas", new Color(0.72f, 0.2f, 0.12f), gestor);
         TarjetaMision(tarjeta.transform, 3, 440f, "Emergencia en la base Selene",
-            "Meteoritos sobre la base lunar. Tres heridos con gravedad baja y androides averiados.",
+            "Meteoritos sobre la base lunar. Dos pacientes, gravedad baja y androides averiados.",
             "Muy alta", "150 monedas", new Color(0.24f, 0.3f, 0.62f), gestor);
 
         BotonUI(tarjeta.transform, "BtnVolver", "VOLVER", 22f, new Vector2(0.5f, 0f), new Vector2(0f, 30f), new Vector2(280f, 60f), ColGris, npc.CerrarMenu);

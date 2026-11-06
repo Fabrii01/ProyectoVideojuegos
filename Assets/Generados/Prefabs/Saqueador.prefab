@@ -534,7 +534,7 @@ MonoBehaviour:
   radioGolpe: 1.5
   danio: 15
   esperaEntreGolpes: 1.3
-  fuerzaEmpuje: 7
+  fuerzaEmpuje: 3.5
   vidaMaxima: 100
   barraVida: {fileID: 7251931208556604927}
   rellenoVida: {fileID: 2360142899713879570}

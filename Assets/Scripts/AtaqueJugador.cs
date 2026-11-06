@@ -12,6 +12,7 @@ public class AtaqueJugador : MonoBehaviour
 {
     public float alcance = 1.3f;
     public float radio = 1.2f;
+    public float alcanceApuntado = 3.5f;
     public float esperaEntreGolpes = 0.7f;
     public float retrasoImpacto = 0.3f;
     public TextMeshProUGUI textoAyuda;
@@ -51,8 +52,32 @@ public class AtaqueJugador : MonoBehaviour
         if (danio <= 0 || Time.time < proximoGolpe) return;
 
         proximoGolpe = Time.time + esperaEntreGolpes;
+        MirarEnemigoCercano();
         if (jugador.animador != null) jugador.animador.SetTrigger("Golpear");
         StartCoroutine(Impactar());
+    }
+
+    /// <summary>Gira al personaje hacia el enemigo más cercano para no fallar por la orientación.</summary>
+    private void MirarEnemigoCercano()
+    {
+        Transform modelo = jugador.modeloVisualDoctor != null ? jugador.modeloVisualDoctor : transform;
+        EnemigoPatrulla cercano = null;
+        float mejor = alcanceApuntado;
+
+        foreach (EnemigoPatrulla enemigo in FindObjectsByType<EnemigoPatrulla>(FindObjectsInactive.Exclude))
+        {
+            float distancia = Vector3.Distance(enemigo.transform.position, transform.position);
+            if (enemigo.EstaDerrotado || distancia >= mejor) continue;
+
+            mejor = distancia;
+            cercano = enemigo;
+        }
+
+        if (cercano == null) return;
+
+        Vector3 direccion = cercano.transform.position - transform.position;
+        direccion.y = 0f;
+        if (direccion.sqrMagnitude > 0.01f) modelo.rotation = Quaternion.LookRotation(direccion);
     }
 
     private IEnumerator Impactar()

@@ -2,12 +2,13 @@ using TMPro;
 using UnityEngine;
 
 /// <summary>
-/// Paciente que necesita jeringas y equipajes de salud. Muestra lo que le falta
-/// y avisa a GestorMision cuando queda atendido.
+/// Paciente con una enfermedad que necesita jeringas y equipajes de salud. Al curarlo
+/// se muestra su ficha médica y se avisa a GestorMision.
 /// </summary>
 public class Paciente : MonoBehaviour
 {
     [Header("Requisitos Médicos")]
+    public Enfermedad enfermedad;
     public int jeringasRequeridas = 2;
     public int equipajesRequeridos = 1;
 
@@ -88,6 +89,21 @@ public class Paciente : MonoBehaviour
 
         if (textoEstado != null) textoEstado.text = "ESTABILIZADO\nPaciente fuera de peligro";
         if (AudioManager.Instancia != null) AudioManager.Instancia.PlayCurar();
+
+        if (enfermedad != null) DatosJugador.AprenderEnfermedad(enfermedad.id);
+
+        if (enfermedad != null && FichaMedicaUI.Instancia != null)
+        {
+            FichaMedicaUI.Instancia.Mostrar(enfermedad, AvisarMision);
+        }
+        else
+        {
+            AvisarMision();
+        }
+    }
+
+    private void AvisarMision()
+    {
         if (GestorMision.Instancia != null) GestorMision.Instancia.PacienteAtendido();
     }
 
@@ -95,7 +111,8 @@ public class Paciente : MonoBehaviour
     {
         if (textoEstado != null)
         {
-            textoEstado.text = $"PACIENTE HERIDO\nNecesita {jeringasRequeridas} jeringas y {equipajesRequeridos} equipajes";
+            string titulo = enfermedad != null ? enfermedad.nombre.ToUpper() : "PACIENTE";
+            textoEstado.text = $"{titulo}\nNecesita {jeringasRequeridas} jeringas y {equipajesRequeridos} equipajes";
         }
     }
 }

@@ -19,18 +19,6 @@ public static partial class MontajeRescate
         "Ana", "Luis", "Marta", "Diego", "Rosa", "Pablo", "Elena", "Hugo", "Sara", "Tomás", "Inés", "Raúl", "Lucía", "Mario"
     };
 
-    private static readonly string[] Consejos =
-    {
-        "Lávate las manos con agua y jabón antes de comer.",
-        "En un sismo: agáchate, cúbrete y sujétate.",
-        "Ten lista una mochila de emergencia en casa.",
-        "En una emergencia, bebe solo agua segura.",
-        "Si una herida sangra, presiona con un paño limpio.",
-        "Aprende el número de emergencias de tu país.",
-        "Después de un sismo, aléjate de muros dañados.",
-        "Dormir bien también cuida tu salud."
-    };
-
     private static void ConstruirVidaHub(GameObject jugador)
     {
         Transform raiz = new GameObject("VidaHub").transform;
@@ -45,6 +33,7 @@ public static partial class MontajeRescate
         ConstruirFuente(raiz);
         ConstruirEntornoCalle(calle);
         Transform mando = ConstruirPuestoMando(raiz);
+        Transform aula = ConstruirAula(raiz);
 
         raiz.gameObject.AddComponent<AmbienteHub>();
 
@@ -54,6 +43,7 @@ public static partial class MontajeRescate
         ConstruirTrafico(calle);
         ConstruirResidentes(personas);
         ConstruirEquipoMando(mando);
+        ConstruirAlumnos(aula);
         ConstruirPajaros(raiz);
     }
 
@@ -122,7 +112,7 @@ public static partial class MontajeRescate
         }
 
         Rectangulo(-3.5f, -14f, 3.5f, 0f);    // del Hub a la plaza
-        Rectangulo(-20f, -3f, 16f, 14f);      // explanada de la tienda y el puesto de mando
+        Rectangulo(-26f, -4f, 24f, 8f);       // explanada de la tienda, el aula y el puesto de mando
         Rectangulo(-24f, -24f, 24f, -20f);    // cruce hacia los parques
 
         const int LADOS = 64;
@@ -164,7 +154,7 @@ public static partial class MontajeRescate
     private static Transform ConstruirPuestoMando(Transform raiz)
     {
         Transform puesto = Grupo(raiz, "PuestoMando");
-        puesto.position = new Vector3(10.5f, 0f, 4.5f);
+        puesto.position = PosMando;
         puesto.rotation = Quaternion.Euler(0f, -25f, 0f);
 
         Vector3 Mundo(float x, float y, float z) => puesto.TransformPoint(new Vector3(x, y, z));
@@ -296,6 +286,12 @@ public static partial class MontajeRescate
         return original;
     }
 
+    /// <summary>Zona que debe quedar libre de plantas alrededor de la tienda y el puesto de mando.</summary>
+    private static bool EnExplanada(Vector3 pos)
+    {
+        return Mathf.Abs(pos.x) < 28f && pos.z > -8f && pos.z < 15f;
+    }
+
     private static void ConstruirParque(Transform raiz, float lado, int semilla)
     {
         System.Random azar = new System.Random(semilla);
@@ -310,7 +306,7 @@ public static partial class MontajeRescate
         for (int intento = 0; intento < 200 && colocados < 15; intento++)
         {
             Vector3 pos = new Vector3(lado * Rango(20f, 35f), 0f, Rango(-32f, 32f));
-            if (ocupados.Exists(o => Vector3.Distance(o, pos) < 6.5f)) continue;
+            if (EnExplanada(pos) || ocupados.Exists(o => Vector3.Distance(o, pos) < 6.5f)) continue;
 
             ocupados.Add(pos);
             colocados++;
@@ -320,6 +316,7 @@ public static partial class MontajeRescate
         for (int i = 0; i < 18; i++)
         {
             Vector3 pos = new Vector3(lado * Rango(19f, 35f), 0f, Rango(-33f, 33f));
+            if (EnExplanada(pos)) continue;
             Vegetal(arbustos[azar.Next(arbustos.Length)], raiz, pos, Rango(0f, 360f), Rango(0.7f, 1.2f));
         }
 
@@ -328,6 +325,7 @@ public static partial class MontajeRescate
         {
             Vector3 centro = new Vector3(lado * Rango(19f, 35f), 0f, Rango(-32f, 32f));
             string flor = flores[azar.Next(flores.Length)];
+            if (EnExplanada(centro)) continue;
             for (int j = 0; j < 7; j++)
             {
                 Vector3 pos = centro + new Vector3(Rango(-1.3f, 1.3f), 0f, Rango(-1.3f, 1.3f));
@@ -338,12 +336,14 @@ public static partial class MontajeRescate
         for (int i = 0; i < 40; i++)
         {
             Vector3 pos = new Vector3(lado * Rango(18.5f, 35.5f), 0f, Rango(-33.5f, 33.5f));
+            if (EnExplanada(pos)) continue;
             Vegetal(i % 2 == 0 ? "grass" : "grass_large", raiz, pos, Rango(0f, 360f), Rango(0.3f, 0.5f));
         }
 
         // Bancas mirando al paseo central.
         for (float z = -28f; z <= 28f; z += 14f)
         {
+            if (EnExplanada(new Vector3(lado * 18.6f, 0f, z))) continue;
             Poner(CIUDAD + "bench.prefab", raiz, new Vector3(lado * 18.6f, 0f, z), lado > 0f ? -90f : 90f, 0.8f);
         }
     }
@@ -418,7 +418,7 @@ public static partial class MontajeRescate
         Vehiculo("suv", raiz, new Vector3(3f, 0f, 30f), 180f);
 
         // Camión de reparto junto a la tienda.
-        Vehiculo("delivery", raiz, new Vector3(-15.5f, 0f, 7f), 8f);
+        Vehiculo("delivery", raiz, new Vector3(-25f, 0f, 8f), 8f);
 
         foreach (Vector3 pos in new[] { new Vector3(6.5f, 0f, 28f), new Vector3(7.5f, 0f, 30f), new Vector3(6.5f, 0f, 32f) })
         {
@@ -507,9 +507,9 @@ public static partial class MontajeRescate
         Vector3[] lugares =
         {
             new Vector3(-9f, 0f, -22f), new Vector3(9f, 0f, -22f), new Vector3(0f, 0f, -11.5f), new Vector3(0f, 0f, -32.5f),
-            new Vector3(-16f, 0f, -14f), new Vector3(16f, 0f, -14f), new Vector3(-16f, 0f, 12f), new Vector3(16f, 0f, 2f),
+            new Vector3(-16f, 0f, -14f), new Vector3(16f, 0f, -14f), new Vector3(-9f, 0f, -3f), new Vector3(7f, 0f, -3f),
             new Vector3(-23f, 0f, 24f), new Vector3(23f, 0f, -26f), new Vector3(-24f, 0f, -24f), new Vector3(24f, 0f, 22f),
-            new Vector3(-4f, 0f, 0f), new Vector3(14f, 0f, 26f), new Vector3(-14f, 0f, 26f), new Vector3(0f, 0f, -3f)
+            new Vector3(-5f, 0f, -6f), new Vector3(14f, 0f, 26f), new Vector3(-14f, 0f, 26f), new Vector3(4f, 0f, -6f)
         };
 
         Transform[] puntos = new Transform[lugares.Length];
@@ -524,15 +524,15 @@ public static partial class MontajeRescate
         for (int i = 0; i < 9; i++)
         {
             Vector3 inicio = lugares[(i * 3 + 1) % lugares.Length];
-            CrearResidente(raiz, "Residente" + (i + 1), Nombres[i], PielVecino(i), inicio, i * 40f, puntos, true);
+            CrearResidente(raiz, "Residente" + (i + 1), Nombres[i], PielVecino(i), inicio, i * 40f, puntos, true).frases = Conversaciones[i];
         }
 
         // Grupos que charlan quietos.
-        CrearResidente(raiz, "Charla1", Nombres[9], PielVecino(1), new Vector3(-7f, 0f, -12f), 90f, null, false);
-        CrearResidente(raiz, "Charla2", Nombres[10], PielVecino(2), new Vector3(-5.6f, 0f, -12f), -90f, null, false);
-        CrearResidente(raiz, "Charla3", Nombres[11], PielVecino(4), new Vector3(13.5f, 0f, -6f), 200f, null, false);
-        CrearResidente(raiz, "Charla4", Nombres[12], PielVecino(5), new Vector3(13f, 0f, -7.6f), 20f, null, false);
-        CrearResidente(raiz, "Paseante", Nombres[13], PielVecino(0), new Vector3(-17.3f, 0f, 3f), 90f, null, false);
+        CrearResidente(raiz, "Charla1", Nombres[9], PielVecino(1), new Vector3(-7f, 0f, -12f), 90f, null, false).frases = Conversaciones[9];
+        CrearResidente(raiz, "Charla2", Nombres[10], PielVecino(2), new Vector3(-5.6f, 0f, -12f), -90f, null, false).frases = Conversaciones[10];
+        CrearResidente(raiz, "Charla3", Nombres[11], PielVecino(4), new Vector3(13.5f, 0f, -9f), 200f, null, false).frases = Conversaciones[11];
+        CrearResidente(raiz, "Charla4", Nombres[12], PielVecino(5), new Vector3(13f, 0f, -10.6f), 20f, null, false).frases = Conversaciones[12];
+        CrearResidente(raiz, "Paseante", Nombres[13], PielVecino(0), new Vector3(-21f, 0f, -11f), 60f, null, false).frases = Conversaciones[13];
     }
 
     private static NPCResidente CrearResidente(Transform padre, string id, string nombre, Material piel, Vector3 pos, float giroY, Transform[] puntos, bool pasea)
@@ -570,7 +570,6 @@ public static partial class MontajeRescate
         residente.pasea = pasea;
         residente.animador = modelo.GetComponent<Animator>();
         residente.marcaCharla = puntos3;
-        residente.frases = Consejos;
         return residente;
     }
 

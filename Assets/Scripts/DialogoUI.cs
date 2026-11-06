@@ -9,6 +9,7 @@ public class DialogoUI : MonoBehaviour
     public GameObject panel;
     public TextMeshProUGUI textoNombre;
     public TextMeshProUGUI textoFrase;
+    public TextMeshProUGUI textoPista;
     public float letrasPorSegundo = 50f;
 
     private object hablante;
@@ -28,13 +29,14 @@ public class DialogoUI : MonoBehaviour
         if (Instancia == this) Instancia = null;
     }
 
-    public void Mostrar(object quien, string nombre, string frase)
+    public void Mostrar(object quien, string nombre, string frase, string pista = "")
     {
         hablante = quien;
         letras = 0f;
         textoNombre.text = nombre;
         textoFrase.text = frase;
         textoFrase.maxVisibleCharacters = 0;
+        if (textoPista != null) textoPista.text = pista;
         panel.SetActive(true);
     }
 

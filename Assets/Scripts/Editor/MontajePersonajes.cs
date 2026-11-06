@@ -60,6 +60,7 @@ public static partial class MontajeRescate
     private static Material PielAstronauta => Piel("Astronauta", "#D7DBE2", "#EEF1F5", "#3A2A1E", "#E5B58A");
     private static Material PielFurtivo => Piel("Furtivo", "#2F3A22", "#4B5A2E", "#1A1A12", "#C89459");
     private static Material PielAndroide => Piel("Androide", "#4A505A", "#7A8290", "#23262C", "#A7B0BC");
+    private static Material PielInstructora => Piel("Instructora", "#2B3A67", "#D9E2F2", "#5A3A22", "#C89459");
     private static Material PielSaqueador => Piel("Saqueador", "#2A1518", "#26262B", "#141414", "#D9A97A");
 
     private static Material PielVecino(int indice)

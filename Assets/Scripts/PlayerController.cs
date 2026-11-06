@@ -332,11 +332,12 @@ public class PlayerController : MonoBehaviour
         transform.position = puntoInicio;
     }
 
-    /// <summary>Lanza al jugador en una dirección, por ejemplo al recibir un golpe.</summary>
+    /// <summary>Empuja al jugador por el suelo al recibir un golpe, sin levantarlo.</summary>
     public void Empujar(Vector3 velocidad)
     {
-        finEmpuje = Time.time + 0.25f;
-        rb.linearVelocity = velocidad + Vector3.up * 2f;
+        finEmpuje = Time.time + 0.15f;
+        velocidad.y = rb.linearVelocity.y;
+        rb.linearVelocity = velocidad;
     }
 
     /// <summary>Descuenta lo entregado a un paciente y ajusta lo que falta conseguir.</summary>

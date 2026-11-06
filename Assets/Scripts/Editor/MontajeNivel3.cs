@@ -40,7 +40,7 @@ public static partial class MontajeRescate
             gravedad = -5f,
             avisos = new[]
             {
-                "Base Selene, emergencia. Los meteoritos dañaron los módulos y hay tres heridos.",
+                "Base Selene, emergencia. Tras los meteoritos hay un caso de hipoxia y uno de descompresión.",
                 "Aquí la gravedad es baja: saltas más alto. Si ves una marca roja en el suelo, apártate."
             },
             leccion = "en un espacio cerrado sin aire seguro, sal con calma y sigue las rutas de evacuación. Revisar el equipo salva vidas.",
@@ -88,7 +88,7 @@ public static partial class MontajeRescate
         Vector3[] jeringas = { new Vector3(-26f, 0.9f, -38f), new Vector3(22f, 0.9f, -38f), new Vector3(-48f, 0.9f, -12f), new Vector3(48f, 0.9f, 8f), new Vector3(-12f, 0.9f, 30f), new Vector3(14f, 0.9f, 46f) };
         Vector3[] equipajes = { new Vector3(0f, 0.9f, -22f), new Vector3(-48f, 0.9f, 28f), new Vector3(48f, 0.9f, 26f), new Vector3(-18f, 0.9f, 46f) };
         Vector3[] botiquines = { new Vector3(-6f, 0.9f, -34f), new Vector3(42f, 0.9f, -16f), new Vector3(-42f, 0.9f, 8f) };
-        Vector3[] pacientes = { new Vector3(-46f, 0f, 18f), new Vector3(46f, 0f, 16f), new Vector3(-30f, 0f, 44f) };
+        Vector3[] pacientes = { new Vector3(-46f, 0f, 18f), new Vector3(46f, 0f, 16f) };
 
         List<Vector3> libres = new List<Vector3>(jeringas);
         libres.AddRange(equipajes);
@@ -113,9 +113,8 @@ public static partial class MontajeRescate
         Linea(g.monedas, new Vector3(16f, 0f, 22f), new Vector3(8f, 0f, 36f), 4);
         Arco(g.monedas, new Vector3(-6f, 0f, 25f), new Vector3(6f, 0f, 25f), 5, 4.5f);
 
-        CrearPaciente(g.nivel, pacientes[0], 80f, 1, 1, PielAstronauta);
-        CrearPaciente(g.nivel, pacientes[1], -80f, 2, 1, PielAstronauta);
-        CrearPaciente(g.nivel, pacientes[2], 10f, 1, 1, PielAstronauta);
+        CrearPaciente(g.nivel, pacientes[0], 80f, 2, 1, PielAstronauta, "hipoxia");
+        CrearPaciente(g.nivel, pacientes[1], -80f, 2, 2, PielAstronauta, "descompresion");
 
         LluviaMeteoritos lluvia = new GameObject("LluviaMeteoritos").AddComponent<LluviaMeteoritos>();
         lluvia.transform.SetParent(g.nivel, false);
@@ -326,7 +325,7 @@ public static partial class MontajeRescate
     {
         return new List<CaminoEnemigo>
         {
-            new CaminoEnemigo("Androide_Sur", new[] { new Vector3(-20f, 0f, -36f), new Vector3(20f, 0f, -36f), new Vector3(16f, 0f, -18f), new Vector3(-16f, 0f, -18f) }),
+            new CaminoEnemigo("Androide_Sur", new[] { new Vector3(-20f, 0f, -28f), new Vector3(20f, 0f, -28f), new Vector3(16f, 0f, -18f), new Vector3(-16f, 0f, -18f) }),
             new CaminoEnemigo("Androide_Oeste", new[] { new Vector3(-48f, 0f, -6f), new Vector3(-48f, 0f, 34f), new Vector3(-20f, 0f, 36f), new Vector3(-16f, 0f, 24f) }),
             new CaminoEnemigo("Androide_Este", new[] { new Vector3(48f, 0f, -8f), new Vector3(48f, 0f, 34f), new Vector3(20f, 0f, 38f), new Vector3(16f, 0f, 24f) }),
             new CaminoEnemigo("Androide_Norte", new[] { new Vector3(-16f, 0f, 48f), new Vector3(18f, 0f, 48f), new Vector3(10f, 0f, 30f), new Vector3(-10f, 0f, 30f) })

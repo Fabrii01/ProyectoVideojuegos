@@ -12,6 +12,7 @@ public static class DatosJugador
     private const string CLAVE_COMPRADOS = "Rescate_Comprados";
     private const string CLAVE_EQUIPADOS = "Rescate_Equipados";
     private const string CLAVE_NIVEL = "Rescate_NivelCompletado";
+    private const string CLAVE_ENFERMEDADES = "Rescate_Enfermedades";
 
     /// <summary>Se dispara cuando cambian las monedas, las compras o el equipo.</summary>
     public static event Action OnCambio;
@@ -20,6 +21,7 @@ public static class DatosJugador
     private static int monedas;
     private static readonly HashSet<string> comprados = new HashSet<string>();
     private static readonly HashSet<string> equipados = new HashSet<string>();
+    private static readonly HashSet<string> enfermedades = new HashSet<string>();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ReiniciarEstadoEstatico()
@@ -77,6 +79,19 @@ public static class DatosJugador
         Guardar();
     }
 
+    public static bool EnfermedadAprendida(string id)
+    {
+        Cargar();
+        return enfermedades.Contains(id);
+    }
+
+    /// <summary>Registra una enfermedad curada para que el NPC de preguntas la evalúe.</summary>
+    public static void AprenderEnfermedad(string id)
+    {
+        Cargar();
+        if (enfermedades.Add(id)) Guardar();
+    }
+
     public static bool NivelCompletado(int numero)
     {
         return PlayerPrefs.GetInt(CLAVE_NIVEL, 0) >= numero;
@@ -97,6 +112,7 @@ public static class DatosJugador
         PlayerPrefs.DeleteKey(CLAVE_COMPRADOS);
         PlayerPrefs.DeleteKey(CLAVE_EQUIPADOS);
         PlayerPrefs.DeleteKey(CLAVE_NIVEL);
+        PlayerPrefs.DeleteKey(CLAVE_ENFERMEDADES);
         PlayerPrefs.Save();
         cargado = false;
         Cargar();
@@ -111,6 +127,7 @@ public static class DatosJugador
         monedas = PlayerPrefs.GetInt(CLAVE_MONEDAS, 0);
         LeerLista(CLAVE_COMPRADOS, comprados);
         LeerLista(CLAVE_EQUIPADOS, equipados);
+        LeerLista(CLAVE_ENFERMEDADES, enfermedades);
     }
 
     private static void LeerLista(string clave, HashSet<string> destino)
@@ -128,6 +145,7 @@ public static class DatosJugador
         PlayerPrefs.SetInt(CLAVE_MONEDAS, monedas);
         PlayerPrefs.SetString(CLAVE_COMPRADOS, string.Join(";", comprados));
         PlayerPrefs.SetString(CLAVE_EQUIPADOS, string.Join(";", equipados));
+        PlayerPrefs.SetString(CLAVE_ENFERMEDADES, string.Join(";", enfermedades));
         PlayerPrefs.Save();
         OnCambio?.Invoke();
     }

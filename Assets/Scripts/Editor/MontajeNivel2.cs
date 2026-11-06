@@ -41,7 +41,7 @@ public static partial class MontajeRescate
             piel = PielBrigadista,
             avisos = new[]
             {
-                "Incendio en la reserva. Hay campistas heridos al otro lado del río.",
+                "Incendio en la reserva. Al otro lado del río hay un intoxicado por humo y un golpe de calor.",
                 "El agua no se puede cruzar: usa los puentes. Cuidado con los furtivos y el fuego."
             },
             leccion = "ante un incendio aléjate del humo, cúbrete nariz y boca y avanza agachado. Nunca dejes una fogata encendida.",
@@ -94,8 +94,8 @@ public static partial class MontajeRescate
         // Campamento y cabaña.
         Campamento(e, campamento);
         Cabana(e, cabana);
-        CrearPaciente(g.nivel, campamento + new Vector3(0f, 0f, -3f), 20f, 2, 1, PielVecino(2));
-        CrearPaciente(g.nivel, cabana + new Vector3(-1f, 0f, -6f), -20f, 1, 2, PielVecino(4));
+        CrearPaciente(g.nivel, campamento + new Vector3(0f, 0f, -3f), 20f, 2, 1, PielVecino(2), "humo");
+        CrearPaciente(g.nivel, cabana + new Vector3(-1f, 0f, -6f), -20f, 1, 2, PielVecino(4), "calor");
 
         Suministros(g.suministros, jeringas, equipajes, botiquines);
 

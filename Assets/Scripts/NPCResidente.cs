@@ -4,7 +4,7 @@ using UnityEngine.AI;
 
 /// <summary>
 /// Persona del Hub: pasea, trabaja o se queda en su sitio. Si el jugador se acerca,
-/// se detiene, lo mira y le da un consejo de salud en el cuadro de diálogo.
+/// se detiene, lo mira y empieza una conversación que avanza con la tecla E.
 /// </summary>
 [RequireComponent(typeof(NavMeshAgent))]
 public class NPCResidente : MonoBehaviour
@@ -22,9 +22,14 @@ public class NPCResidente : MonoBehaviour
 
     private NavMeshAgent agente;
     private Transform jugador;
+    private PlayerController controlJugador;
     private float finPausa;
     private bool hablando;
+    private bool conversacionTerminada;
+    private int linea;
     private Quaternion miradaInicial;
+
+    public bool Hablando => hablando;
 
     private void Start()
     {
@@ -32,7 +37,11 @@ public class NPCResidente : MonoBehaviour
         miradaInicial = transform.rotation;
 
         GameObject objetoJugador = GameObject.FindGameObjectWithTag("Player");
-        if (objetoJugador != null) jugador = objetoJugador.transform;
+        if (objetoJugador != null)
+        {
+            jugador = objetoJugador.transform;
+            controlJugador = objetoJugador.GetComponent<PlayerController>();
+        }
 
         if (marcaCharla != null) marcaCharla.gameObject.SetActive(false);
         if (animador != null) animador.SetBool("Trabajando", trabajando);
@@ -44,12 +53,17 @@ public class NPCResidente : MonoBehaviour
         if (animador != null) animador.SetFloat("Velocidad", agente.velocity.magnitude);
         if (jugador == null || !agente.isOnNavMesh) return;
 
-        bool cerca = Vector3.Distance(transform.position, jugador.position) <= radioCharla;
-        if (cerca != hablando) CambiarCharla(cerca);
+        // Con un menú abierto el jugador está desactivado y no debe seguir la charla.
+        bool cerca = controlJugador.enabled && Vector3.Distance(transform.position, jugador.position) <= radioCharla;
+        if (!cerca) conversacionTerminada = false;
+
+        bool debeHablar = cerca && !conversacionTerminada;
+        if (debeHablar != hablando) CambiarCharla(debeHablar);
 
         if (hablando)
         {
             MirarHacia(jugador.position);
+            if (Input.GetKeyDown(KeyCode.E)) Avanzar();
             return;
         }
 
@@ -65,16 +79,38 @@ public class NPCResidente : MonoBehaviour
         if (marcaCharla != null) marcaCharla.gameObject.SetActive(iniciar);
         if (animador != null) animador.SetBool("Trabajando", trabajando && !iniciar);
 
-        if (DialogoUI.Instancia == null) return;
-
-        if (iniciar && frases != null && frases.Length > 0)
+        if (iniciar)
         {
-            DialogoUI.Instancia.Mostrar(this, nombre, frases[Random.Range(0, frases.Length)]);
+            linea = 0;
+            MostrarLinea();
         }
-        else
+        else if (DialogoUI.Instancia != null)
         {
             DialogoUI.Instancia.Ocultar(this);
         }
+    }
+
+    /// <summary>Pasa a la siguiente línea o termina la conversación.</summary>
+    public void Avanzar()
+    {
+        linea++;
+
+        if (frases != null && linea < frases.Length)
+        {
+            MostrarLinea();
+            return;
+        }
+
+        conversacionTerminada = true;
+        CambiarCharla(false);
+    }
+
+    private void MostrarLinea()
+    {
+        if (DialogoUI.Instancia == null || frases == null || frases.Length == 0) return;
+
+        bool ultima = linea == frases.Length - 1;
+        DialogoUI.Instancia.Mostrar(this, nombre, frases[linea], ultima ? "E  Cerrar" : "E  Continuar");
     }
 
     private void Pasear()

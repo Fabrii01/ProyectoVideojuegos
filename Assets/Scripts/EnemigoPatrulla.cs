@@ -28,7 +28,7 @@ public class EnemigoPatrulla : MonoBehaviour
     public float radioGolpe = 1.5f;
     public int danio = 15;
     public float esperaEntreGolpes = 1.3f;
-    public float fuerzaEmpuje = 7f;
+    public float fuerzaEmpuje = 3.5f;
 
     [Header("Salud")]
     public int vidaMaxima = 100;
@@ -120,7 +120,10 @@ public class EnemigoPatrulla : MonoBehaviour
         if (distancia <= radioGolpe && Time.time >= proximoGolpe)
         {
             proximoGolpe = Time.time + esperaEntreGolpes;
-            Vector3 direccion = (objetivo.position - transform.position).normalized;
+            // Solo en horizontal: el centro del jugador está más alto que los pies del enemigo.
+            Vector3 direccion = objetivo.position - transform.position;
+            direccion.y = 0f;
+            direccion.Normalize();
             if (animador != null) animador.SetTrigger("Golpear");
             jugador.RecibirDanio(danio);
             jugador.Empujar(direccion * fuerzaEmpuje);
@@ -171,6 +174,7 @@ public class EnemigoPatrulla : MonoBehaviour
         if (indicadorAlerta != null) indicadorAlerta.gameObject.SetActive(alerta);
         if (luzEstado != null) luzEstado.color = alerta ? colorAlerta : colorCalma;
         if (sonar && AudioManager.Instancia != null) AudioManager.Instancia.PlayAlerta();
+        if (sonar && AvisoCentral.Instancia != null) AvisoCentral.Instancia.Mostrar("¡ENEMIGO ENCONTRADO!");
     }
 
     /// <summary>Recibe un golpe del jugador: lo empuja, lo pone en alerta y le quita salud.</summary>

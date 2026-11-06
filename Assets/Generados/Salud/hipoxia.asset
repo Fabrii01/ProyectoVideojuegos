@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d11f3cae32d1ac0468eca355507c096d, type: 3}
+  m_Name: hipoxia
+  m_EditorClassIdentifier: Assembly-CSharp::Enfermedad
+  id: hipoxia
+  nombre: Hipoxia
+  sintomas: "Falta de ox\xEDgeno: confusi\xF3n, mareo, respiraci\xF3n r\xE1pida y
+    labios azulados."
+  tratamiento: "Lleva a la persona a una zona con aire seguro.\nDale ox\xEDgeno si
+    hay disponible.\nVigila su respiraci\xF3n sin dejarla sola.\nEl pulsiox\xEDmetro
+    mide el ox\xEDgeno en la sangre."
+  preguntas:
+  - texto: "\xBFQu\xE9 significa hipoxia?"
+    opciones:
+    - "Falta de ox\xEDgeno"
+    - "Exceso de az\xFAcar"
+    - Fiebre alta
+    correcta: 0
+    explicacion: "Hipoxia es que al cuerpo le llega poco ox\xEDgeno."
+  - texto: "\xBFQu\xE9 aparato mide el ox\xEDgeno en la sangre?"
+    opciones:
+    - "Un term\xF3metro"
+    - "Una b\xE1scula"
+    - "Un pulsiox\xEDmetro"
+    correcta: 2
+    explicacion: "El pulsiox\xEDmetro se coloca normalmente en un dedo."
+  - texto: "\xBFCu\xE1l es el tratamiento principal?"
+    opciones:
+    - "Darle agua con az\xFAcar"
+    - "Darle ox\xEDgeno"
+    - Hacerle correr
+    correcta: 1
+    explicacion: "Se le da ox\xEDgeno y se lleva a una zona con aire seguro."
