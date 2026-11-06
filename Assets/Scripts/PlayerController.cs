@@ -4,9 +4,8 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Controlador principal del jugador con soporte para el modelo 3D del Doctor,
-/// animación procedural de caminata/giro, recolección especializada de jeringas y equipajes de salud,
-/// y menú de pausa integrado.
+/// Controlador principal del rescatista: movimiento, salto, salud, inventario del nivel,
+/// animación procedural y menú de pausa.
 /// </summary>
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
@@ -30,6 +29,8 @@ public class PlayerController : MonoBehaviour
     public int jeringasRecolectadas = 0;
     public int equipajesRecolectados = 0;
     public int botiquinesRecolectados = 0;
+    public int jeringasMeta = 0;
+    public int equipajesMeta = 0;
 
     [Header("Interfaz de Usuario (HUD)")]
     public TextMeshProUGUI textoSuministros;
@@ -42,30 +43,55 @@ public class PlayerController : MonoBehaviour
     public Camera camaraJugador;
 
     private Rigidbody rb;
+    private CapsuleCollider capsula;
+    private readonly Collider[] contactosSuelo = new Collider[8];
+    private Vector3 puntoInicio;
     private bool enElSuelo = true;
+    private float esperaSalto = 0f;
+    private float finEmpuje = 0f;
+    private int vidaExtra = 0;
+    private float velocidadExtra = 0f;
     private bool juegoPausado = false;
     private float tiempoInvulnerable = 0f;
     private const float TIEMPO_INVULNERABILIDAD_BASE = 0.8f;
+    private const float ALTURA_CAIDA_LIMITE = -25f;
+
+    /// <summary>Evita que el ESC que cierra un menú del Hub abra también la pausa.</summary>
+    public static int frameMenuCerrado = -1;
+
+    private int VidaTotal => vidaMaxima + vidaExtra;
 
     // Variables de animación procedural
     private float pasoProceduralTimer = 0f;
-    private Vector3 escalaOriginalModelo = Vector3.one;
+    private Vector3 posicionBaseModelo = Vector3.zero;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true; // Evitar que caiga de lado por físicas
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+
+        capsula = GetComponent<CapsuleCollider>();
+        if (capsula != null)
+        {
+            // Sin fricción para no quedar pegado a las paredes al saltar.
+            capsula.material = new PhysicsMaterial("JugadorSinFriccion")
+            {
+                dynamicFriction = 0f,
+                staticFriction = 0f,
+                frictionCombine = PhysicsMaterialCombine.Minimum
+            };
+        }
     }
 
     private void Start()
     {
-        vidaActual = vidaMaxima;
+        puntoInicio = transform.position;
+        vidaActual = VidaTotal;
+        ActualizarBarraVida();
 
-        if (barraDeVida != null)
-        {
-            barraDeVida.maxValue = vidaMaxima;
-            barraDeVida.value = vidaActual;
-        }
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
 
         if (panelPausa != null)
         {
@@ -89,7 +115,7 @@ public class PlayerController : MonoBehaviour
 
         if (modeloVisualDoctor != null)
         {
-            escalaOriginalModelo = modeloVisualDoctor.localScale;
+            posicionBaseModelo = modeloVisualDoctor.localPosition;
         }
 
         ActualizarHUD();
@@ -101,6 +127,7 @@ public class PlayerController : MonoBehaviour
 
         if (juegoPausado) return;
 
+        enElSuelo = DetectarSuelo();
         ProcesarMovimiento();
         ProcesarSalto();
         ActualizarAnimacionProcedural();
@@ -109,10 +136,34 @@ public class PlayerController : MonoBehaviour
         {
             tiempoInvulnerable -= Time.deltaTime;
         }
+
+        if (transform.position.y < ALTURA_CAIDA_LIMITE)
+        {
+            VolverAlInicio();
+        }
+    }
+
+    private bool DetectarSuelo()
+    {
+        if (capsula == null) return true;
+
+        float radio = capsula.radius * 0.9f;
+        Vector3 centro = capsula.bounds.center;
+        centro.y = capsula.bounds.min.y + radio - 0.1f;
+
+        int total = Physics.OverlapSphereNonAlloc(centro, radio, contactosSuelo, ~0, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < total; i++)
+        {
+            if (!contactosSuelo[i].transform.IsChildOf(transform)) return true;
+        }
+        return false;
     }
 
     private void ProcesarMovimiento()
     {
+        // Durante un empuje el jugador no controla al personaje.
+        if (Time.time < finEmpuje) return;
+
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
 
@@ -136,7 +187,7 @@ public class PlayerController : MonoBehaviour
         }
 
         bool estaCorriendo = Input.GetKey(KeyCode.LeftShift);
-        float velActual = estaCorriendo ? velocidadCorrer : velocidadMovimiento;
+        float velActual = (estaCorriendo ? velocidadCorrer : velocidadMovimiento) + velocidadExtra;
 
         Vector3 velFisica = rb.linearVelocity;
         velFisica.x = direccionDeseada.x * velActual;
@@ -160,10 +211,15 @@ public class PlayerController : MonoBehaviour
 
     private void ProcesarSalto()
     {
-        if (Input.GetButtonDown("Jump") && enElSuelo)
+        esperaSalto -= Time.deltaTime;
+
+        if (Input.GetButtonDown("Jump") && enElSuelo && esperaSalto <= 0f)
         {
+            Vector3 velocidad = rb.linearVelocity;
+            velocidad.y = 0f;
+            rb.linearVelocity = velocidad;
             rb.AddForce(Vector3.up * fuerzaSalto, ForceMode.Impulse);
-            enElSuelo = false;
+            esperaSalto = 0.25f;
         }
     }
 
@@ -180,21 +236,21 @@ public class PlayerController : MonoBehaviour
             float balanceo = Mathf.Sin(pasoProceduralTimer) * 0.05f;
             float inclinacion = Mathf.Cos(pasoProceduralTimer * 0.5f) * 2.5f;
 
-            modeloVisualDoctor.localPosition = new Vector3(0f, Mathf.Abs(balanceo) * 0.1f, 0f);
+            modeloVisualDoctor.localPosition = posicionBaseModelo + new Vector3(0f, Mathf.Abs(balanceo) * 0.1f, 0f);
             modeloVisualDoctor.localRotation = Quaternion.Euler(inclinacion, modeloVisualDoctor.localEulerAngles.y, balanceo * 10f);
         }
         else
         {
             // Respiración / Balanceo sutil en espera
             float respiracion = Mathf.Sin(Time.time * 2f) * 0.015f;
-            modeloVisualDoctor.localPosition = new Vector3(0f, respiracion, 0f);
+            modeloVisualDoctor.localPosition = posicionBaseModelo + new Vector3(0f, respiracion, 0f);
             modeloVisualDoctor.localRotation = Quaternion.Euler(0f, modeloVisualDoctor.localEulerAngles.y, 0f);
         }
     }
 
     private void ProcesarEntradaPausa()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetKeyDown(KeyCode.Escape) && Time.frameCount != frameMenuCerrado)
         {
             if (juegoPausado)
             {
@@ -271,11 +327,8 @@ public class PlayerController : MonoBehaviour
 
     public void Curar(int cantidad)
     {
-        vidaActual = Mathf.Clamp(vidaActual + cantidad, 0, vidaMaxima);
-        if (barraDeVida != null)
-        {
-            barraDeVida.value = vidaActual;
-        }
+        vidaActual = Mathf.Clamp(vidaActual + cantidad, 0, VidaTotal);
+        ActualizarBarraVida();
 
         if (AudioManager.Instancia != null)
         {
@@ -289,11 +342,7 @@ public class PlayerController : MonoBehaviour
 
         vidaActual = Mathf.Max(0, vidaActual - cantidad);
         tiempoInvulnerable = TIEMPO_INVULNERABILIDAD_BASE;
-
-        if (barraDeVida != null)
-        {
-            barraDeVida.value = vidaActual;
-        }
+        ActualizarBarraVida();
 
         if (AudioManager.Instancia != null)
         {
@@ -302,41 +351,70 @@ public class PlayerController : MonoBehaviour
 
         if (vidaActual <= 0)
         {
-            // Derrota / Reiniciar posición
-            vidaActual = vidaMaxima;
-            if (barraDeVida != null) barraDeVida.value = vidaActual;
-            transform.position = new Vector3(500f, 2f, 498f);
+            VolverAlInicio();
         }
+    }
+
+    private void VolverAlInicio()
+    {
+        vidaActual = VidaTotal;
+        ActualizarBarraVida();
+        rb.linearVelocity = Vector3.zero;
+        rb.position = puntoInicio;
+        transform.position = puntoInicio;
+    }
+
+    /// <summary>Lanza al jugador en una dirección, por ejemplo al recibir un golpe.</summary>
+    public void Empujar(Vector3 velocidad)
+    {
+        finEmpuje = Time.time + 0.25f;
+        rb.linearVelocity = velocidad + Vector3.up * 2f;
+    }
+
+    /// <summary>Frena al personaje; se usa al abrir menús porque el Rigidbody conserva su velocidad.</summary>
+    public void Detener()
+    {
+        if (rb == null) rb = GetComponent<Rigidbody>();
+        rb.linearVelocity = Vector3.zero;
+    }
+
+    /// <summary>Recibe las bonificaciones de los objetos equipados.</summary>
+    public void AplicarBonos(int vida, float velocidad)
+    {
+        vidaExtra = vida;
+        velocidadExtra = velocidad;
+        vidaActual = Mathf.Min(vidaActual, VidaTotal);
+        ActualizarBarraVida();
+    }
+
+    private void ActualizarBarraVida()
+    {
+        if (barraDeVida == null) return;
+
+        barraDeVida.maxValue = VidaTotal;
+        barraDeVida.value = vidaActual;
     }
 
     public void ActualizarHUD()
     {
         if (textoSuministros != null)
         {
-            textoSuministros.text = $"Suministros Totales: {cantidadSuministros}";
+            textoSuministros.text = $"Suministros: {cantidadSuministros}";
         }
 
         if (textoJeringas != null)
         {
-            textoJeringas.text = $"Jeringas: {jeringasRecolectadas}";
+            textoJeringas.text = $"Jeringas  {jeringasRecolectadas} / {jeringasMeta}";
         }
 
         if (textoEquipajes != null)
         {
-            textoEquipajes.text = $"Equipajes de Salud: {equipajesRecolectados}";
+            textoEquipajes.text = $"Equipajes  {equipajesRecolectados} / {equipajesMeta}";
         }
     }
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.name.Contains("Terrain") ||
-            collision.gameObject.name.Contains("Suelo") ||
-            collision.gameObject.name.Contains("asphalt") ||
-            collision.gameObject.name.Contains("Floor"))
-        {
-            enElSuelo = true;
-        }
-
         if (collision.gameObject.CompareTag("Peligro"))
         {
             RecibirDanio(20);

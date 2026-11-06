@@ -3,15 +3,17 @@ using TMPro;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Representa a un paciente que requiere suministros de salud específicos (jeringas y equipajes).
-/// Muestra su estado en tiempo real y desencadena la victoria cuando es atendido con éxito.
+/// Paciente que necesita jeringas y equipajes de salud. Muestra lo que le falta
+/// y, al ser atendido, da la recompensa y termina la misión.
 /// </summary>
 public class Paciente : MonoBehaviour
 {
     [Header("Requisitos Médicos")]
-    public int suministrosRequeridos = 5; // Compatibilidad
     public int jeringasRequeridas = 3;
     public int equipajesRequeridos = 2;
+
+    [Header("Recompensa")]
+    public int recompensaMonedas = 30;
 
     [Header("Elementos de Interfaz")]
     public TextMeshPro textoEstado;
@@ -58,11 +60,7 @@ public class Paciente : MonoBehaviour
             PlayerController jugador = otro.GetComponent<PlayerController>();
             if (jugador != null)
             {
-                bool cumpleRequisitos = (jugador.jeringasRecolectadas >= jeringasRequeridas &&
-                                         jugador.equipajesRecolectados >= equipajesRequeridos) ||
-                                        (jugador.cantidadSuministros >= suministrosRequeridos);
-
-                if (cumpleRequisitos)
+                if (CumpleRequisitos(jugador))
                 {
                     CurarPaciente(jugador);
                 }
@@ -73,7 +71,7 @@ public class Paciente : MonoBehaviour
 
                     if (textoEstado != null)
                     {
-                        textoEstado.text = $"¡Faltan suministros!\nJeringas: {jeringasFaltantes} | Equipajes: {equipajesFaltantes}";
+                        textoEstado.text = $"Faltan suministros\nJeringas: {jeringasFaltantes}  Equipajes: {equipajesFaltantes}";
                     }
 
                     if (AudioManager.Instancia != null)
@@ -83,6 +81,21 @@ public class Paciente : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void OnTriggerStay(Collider otro)
+    {
+        // Por si el jugador entró a la zona y recogió lo que faltaba sin salir de ella.
+        if (pacienteCurado || !otro.CompareTag("Player")) return;
+
+        PlayerController jugador = otro.GetComponent<PlayerController>();
+        if (jugador != null && CumpleRequisitos(jugador)) CurarPaciente(jugador);
+    }
+
+    private bool CumpleRequisitos(PlayerController jugador)
+    {
+        return jugador.jeringasRecolectadas >= jeringasRequeridas &&
+               jugador.equipajesRecolectados >= equipajesRequeridos;
     }
 
     private void OnTriggerExit(Collider otro)
@@ -96,6 +109,7 @@ public class Paciente : MonoBehaviour
     private void CurarPaciente(PlayerController jugador)
     {
         pacienteCurado = true;
+        DatosJugador.AgregarMonedas(recompensaMonedas);
 
         if (luzEstado != null)
         {
@@ -105,7 +119,7 @@ public class Paciente : MonoBehaviour
 
         if (textoEstado != null)
         {
-            textoEstado.text = "¡ESTABILIZADO!\nPaciente fuera de peligro";
+            textoEstado.text = "ESTABILIZADO\nPaciente fuera de peligro";
         }
 
         if (AudioManager.Instancia != null)
@@ -116,12 +130,15 @@ public class Paciente : MonoBehaviour
         if (panelVictoria != null)
         {
             panelVictoria.SetActive(true);
+            jugador.Detener();
+            jugador.enabled = false;
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+            Time.timeScale = 0f;
 
             if (textoMensajeVictoria != null)
             {
-                textoMensajeVictoria.text = $"¡MISIÓN CUMPLIDA DOCTOR!\n\nHas recolectado y suministrado:\n- {jugador.jeringasRecolectadas} Jeringas\n- {jugador.equipajesRecolectados} Equipajes de Salud\n\nEl paciente ha sido salvado exitosamente.";
+                textoMensajeVictoria.text = $"El paciente está estable y listo para el traslado.\n\nEntregaste {jeringasRequeridas} jeringas y {equipajesRequeridos} equipajes de salud.\nRecompensa: +{recompensaMonedas} monedas.";
             }
         }
     }
@@ -130,7 +147,7 @@ public class Paciente : MonoBehaviour
     {
         if (textoEstado != null)
         {
-            textoEstado.text = $"[PACIENTE EN ESPERA]\nNecesita: {jeringasRequeridas} Jeringas y {equipajesRequeridos} Equipajes";
+            textoEstado.text = $"PACIENTE HERIDO\nNecesita {jeringasRequeridas} jeringas y {equipajesRequeridos} equipajes";
         }
     }
 

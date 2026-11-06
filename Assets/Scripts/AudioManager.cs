@@ -20,6 +20,10 @@ public class AudioManager : MonoBehaviour
     public AudioClip clipCurar;
     public AudioClip clipVictoria;
     public AudioClip clipClickUI;
+    public AudioClip clipMoneda;
+    public AudioClip clipCompra;
+    public AudioClip clipAlerta;
+    public AudioClip clipPajaro;
     public AudioClip clipMusicaAmbiente;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -123,6 +127,10 @@ public class AudioManager : MonoBehaviour
     public void PlayDanio() => PlaySFX(clipDanio, Random.Range(0.9f, 1.1f));
     public void PlayVictoria() => PlaySFX(clipVictoria, 1f);
     public void PlayClick() => PlaySFX(clipClickUI, 1f);
+    public void PlayMoneda() => PlaySFX(clipMoneda, Random.Range(0.98f, 1.08f));
+    public void PlayCompra() => PlaySFX(clipCompra, 1f);
+    public void PlayAlerta() => PlaySFX(clipAlerta, 1f);
+    public void PlayPajaro() => PlaySFX(clipPajaro, Random.Range(0.9f, 1.2f));
 
     private void GenerarClipsProceduralesSiFaltan()
     {
@@ -146,6 +154,18 @@ public class AudioManager : MonoBehaviour
 
         if (clipClickUI == null)
             clipClickUI = SintetizarTono("SFX_ClickUI", 1200f, 0.05f, FormaOnda.Senoidal, 0.3f);
+
+        if (clipMoneda == null)
+            clipMoneda = SintetizarArpegio("SFX_Moneda", new float[] { 987.77f, 1318.51f }, 0.18f);
+
+        if (clipCompra == null)
+            clipCompra = SintetizarArpegio("SFX_Compra", new float[] { 659.25f, 880f, 1318.51f }, 0.35f);
+
+        if (clipAlerta == null)
+            clipAlerta = SintetizarTono("SFX_Alerta", 330f, 0.3f, FormaOnda.Cuadrada, 0.5f);
+
+        if (clipPajaro == null)
+            clipPajaro = SintetizarArpegio("SFX_Pajaro", new float[] { 3100f, 3700f, 3300f }, 0.22f);
 
         if (clipMusicaAmbiente == null)
             clipMusicaAmbiente = SintetizarAmbienteMedico("Musica_Ambiente_Salud", 8.0f);

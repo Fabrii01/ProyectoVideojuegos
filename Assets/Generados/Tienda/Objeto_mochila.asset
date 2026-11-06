@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c2e6c6f52ced75468d24fa677d6d606, type: 3}
+  m_Name: Objeto_mochila
+  m_EditorClassIdentifier: Assembly-CSharp::ObjetoTienda
+  id: mochila
+  nombre: Mochila de rescate
+  descripcion: Reparte mejor la carga. +1 de velocidad.
+  precio: 60
+  colorIcono: {r: 0.75, g: 0.14, b: 0.13, a: 1}
+  prefabVisual: {fileID: 1775744656186618148, guid: 3323a2bd07906c24c99e8f3175f018a8, type: 3}
+  punto: 2
+  posicion: {x: 0, y: 0.02, z: -0.2}
+  rotacion: {x: 0, y: 0, z: 0}
+  escala: 0.85
+  vidaExtra: 0
+  velocidadExtra: 1

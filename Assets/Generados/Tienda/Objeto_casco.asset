@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c2e6c6f52ced75468d24fa677d6d606, type: 3}
+  m_Name: Objeto_casco
+  m_EditorClassIdentifier: Assembly-CSharp::ObjetoTienda
+  id: casco
+  nombre: Casco de rescate
+  descripcion: "Protege en derrumbes. +25 de salud m\xE1xima."
+  precio: 40
+  colorIcono: {r: 0.98, g: 0.72, b: 0.08, a: 1}
+  prefabVisual: {fileID: 5244144411932061932, guid: 07e1c31e057cb34409429c7f00978dd6, type: 3}
+  punto: 0
+  posicion: {x: 0, y: 0.19, z: 0.03}
+  rotacion: {x: 0, y: 0, z: 0}
+  escala: 0.9
+  vidaExtra: 25
+  velocidadExtra: 0

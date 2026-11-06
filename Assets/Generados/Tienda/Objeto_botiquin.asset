@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c2e6c6f52ced75468d24fa677d6d606, type: 3}
+  m_Name: Objeto_botiquin
+  m_EditorClassIdentifier: Assembly-CSharp::ObjetoTienda
+  id: botiquin
+  nombre: "Botiqu\xEDn de cintura"
+  descripcion: "Primeros auxilios a mano. +15 de salud m\xE1xima."
+  precio: 45
+  colorIcono: {r: 0.2, g: 0.7, b: 0.4, a: 1}
+  prefabVisual: {fileID: 7888358981939075044, guid: f281bc33191a33d48aaa6b157ebaa913, type: 3}
+  punto: 3
+  posicion: {x: 0.23, y: 0, z: 0}
+  rotacion: {x: 0, y: 90, z: 0}
+  escala: 0.38
+  vidaExtra: 15
+  velocidadExtra: 0

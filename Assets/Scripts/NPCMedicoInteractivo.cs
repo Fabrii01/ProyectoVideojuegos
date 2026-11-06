@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Gestiona la interacción con el Médico Jefe en el Hub para desplegar misiones y niveles.
+/// NPC del Hub con el que se habla pulsando E. Abre un panel: las misiones o la tienda.
 /// </summary>
 public class NPCMedicoInteractivo : MonoBehaviour
 {
@@ -14,9 +14,6 @@ public class NPCMedicoInteractivo : MonoBehaviour
 
     private bool jugadorCerca;
     private bool menuAbierto;
-
-    private CursorLockMode bloqueoCursorOriginal;
-    private bool cursorVisibleOriginal;
 
     private void Start()
     {
@@ -63,15 +60,17 @@ public class NPCMedicoInteractivo : MonoBehaviour
     {
         menuAbierto = true;
 
-        bloqueoCursorOriginal = Cursor.lockState;
-        cursorVisibleOriginal = Cursor.visible;
-
         if (textoInteraccion != null) textoInteraccion.SetActive(false);
         if (panelNiveles != null) panelNiveles.SetActive(true);
 
         if (controladorMovimiento != null)
         {
             controladorMovimiento.enabled = false;
+        }
+
+        if (controladorMovimiento is PlayerController jugador)
+        {
+            jugador.Detener();
         }
 
         Cursor.lockState = CursorLockMode.None;
@@ -86,6 +85,7 @@ public class NPCMedicoInteractivo : MonoBehaviour
     public void CerrarMenu()
     {
         menuAbierto = false;
+        PlayerController.frameMenuCerrado = Time.frameCount;
         if (panelNiveles != null) panelNiveles.SetActive(false);
 
         if (controladorMovimiento != null)
