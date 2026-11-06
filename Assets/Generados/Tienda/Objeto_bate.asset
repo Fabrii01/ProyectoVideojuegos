@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c2e6c6f52ced75468d24fa677d6d606, type: 3}
+  m_Name: Objeto_bate
+  m_EditorClassIdentifier: Assembly-CSharp::ObjetoTienda
+  id: bate
+  nombre: Bate de defensa
+  descripcion: Tu arma. Clic izquierdo o F para golpear.
+  precio: 80
+  colorIcono: {r: 0.8, g: 0.3, b: 0.2, a: 1}
+  prefabVisual: {fileID: 7766828980278665741, guid: 1a923a6404d972d40bae42bee1136b84, type: 3}
+  punto: 4
+  posicion: {x: -0.017782835, y: 0.035978816, z: 0.013758474}
+  rotacion: {x: 311.06046, y: 300.56073, z: 157.61559}
+  escala: 0.75
+  vidaExtra: 0
+  velocidadExtra: 0
+  danioArma: 34

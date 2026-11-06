@@ -11,6 +11,7 @@ public class AudioManager : MonoBehaviour
     [Header("Fuentes de Audio")]
     public AudioSource fuenteSFX;
     public AudioSource fuenteMusica;
+    public AudioSource fuenteMusicaB;
 
     [Header("Clips Opcionales (Si se dejan vacíos se sintetizan automáticamente)")]
     public AudioClip clipJeringa;
@@ -24,7 +25,12 @@ public class AudioManager : MonoBehaviour
     public AudioClip clipCompra;
     public AudioClip clipAlerta;
     public AudioClip clipPajaro;
-    public AudioClip clipMusicaAmbiente;
+    public AudioClip clipGolpe;
+    public AudioClip clipFallo;
+
+    private AudioSource musicaActiva;
+    private float duracionFundido = 1.5f;
+    private bool musicaApagada;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void InicializarEnArranque()
@@ -58,11 +64,6 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    private void Start()
-    {
-        IniciarMusicaAmbiente();
-    }
-
     private void OnDestroy()
     {
         if (AjustesManager.Instancia != null)
@@ -81,10 +82,15 @@ public class AudioManager : MonoBehaviour
 
         if (fuenteMusica == null)
         {
-            fuenteMusica = gameObject.AddComponent<AudioSource>();
-            fuenteMusica.loop = true;
-            fuenteMusica.playOnAwake = false;
+            fuenteMusica = CrearFuenteMusica();
         }
+
+        if (fuenteMusicaB == null)
+        {
+            fuenteMusicaB = CrearFuenteMusica();
+        }
+
+        musicaActiva = fuenteMusica;
     }
 
     public void ActualizarVolumenes()
@@ -96,19 +102,52 @@ public class AudioManager : MonoBehaviour
             fuenteSFX.volume = AjustesManager.Instancia.VolumenSFX;
         }
 
-        if (fuenteMusica != null)
-        {
-            fuenteMusica.volume = AjustesManager.Instancia.VolumenMusica;
-        }
     }
 
-    public void IniciarMusicaAmbiente()
+    private AudioSource CrearFuenteMusica()
     {
-        if (fuenteMusica != null && clipMusicaAmbiente != null && !fuenteMusica.isPlaying)
-        {
-            fuenteMusica.clip = clipMusicaAmbiente;
-            fuenteMusica.Play();
-        }
+        AudioSource fuente = gameObject.AddComponent<AudioSource>();
+        fuente.loop = true;
+        fuente.playOnAwake = false;
+        fuente.volume = 0f;
+        return fuente;
+    }
+
+    /// <summary>Pasa suavemente de la música actual a la indicada.</summary>
+    public void CambiarMusica(AudioClip clip, float segundosFundido = 1.5f)
+    {
+        if (clip == null || (musicaActiva.clip == clip && musicaActiva.isPlaying && !musicaApagada)) return;
+
+        duracionFundido = Mathf.Max(0.05f, segundosFundido);
+        musicaApagada = false;
+
+        if (musicaActiva.clip == clip) return;
+
+        musicaActiva = musicaActiva == fuenteMusica ? fuenteMusicaB : fuenteMusica;
+        musicaActiva.clip = clip;
+        musicaActiva.Play();
+    }
+
+    /// <summary>Baja la música hasta el silencio, por ejemplo al ganar.</summary>
+    public void DetenerMusica(float segundosFundido = 1f)
+    {
+        duracionFundido = Mathf.Max(0.05f, segundosFundido);
+        musicaApagada = true;
+    }
+
+    public AudioClip MusicaActual => musicaApagada ? null : musicaActiva.clip;
+
+    private void Update()
+    {
+        // Sin escala de tiempo: la música sigue fundiendo en pausa y en la pantalla de victoria.
+        float volumen = AjustesManager.Instancia != null ? AjustesManager.Instancia.VolumenMusica : 0.7f;
+        float paso = Time.unscaledDeltaTime / duracionFundido;
+
+        AudioSource otra = musicaActiva == fuenteMusica ? fuenteMusicaB : fuenteMusica;
+        musicaActiva.volume = Mathf.MoveTowards(musicaActiva.volume, musicaApagada ? 0f : volumen, paso);
+        otra.volume = Mathf.MoveTowards(otra.volume, 0f, paso);
+
+        if (otra.isPlaying && otra.volume <= 0f) otra.Stop();
     }
 
     public void PlaySFX(AudioClip clip, float pitch = 1f)
@@ -131,6 +170,8 @@ public class AudioManager : MonoBehaviour
     public void PlayCompra() => PlaySFX(clipCompra, 1f);
     public void PlayAlerta() => PlaySFX(clipAlerta, 1f);
     public void PlayPajaro() => PlaySFX(clipPajaro, Random.Range(0.9f, 1.2f));
+    public void PlayGolpe() => PlaySFX(clipGolpe, Random.Range(0.9f, 1.1f));
+    public void PlayFallo() => PlaySFX(clipFallo, Random.Range(0.95f, 1.1f));
 
     private void GenerarClipsProceduralesSiFaltan()
     {
@@ -167,8 +208,11 @@ public class AudioManager : MonoBehaviour
         if (clipPajaro == null)
             clipPajaro = SintetizarArpegio("SFX_Pajaro", new float[] { 3100f, 3700f, 3300f }, 0.22f);
 
-        if (clipMusicaAmbiente == null)
-            clipMusicaAmbiente = SintetizarAmbienteMedico("Musica_Ambiente_Salud", 8.0f);
+        if (clipGolpe == null)
+            clipGolpe = SintetizarTono("SFX_Golpe", 110f, 0.16f, FormaOnda.Cuadrada, 0.35f);
+
+        if (clipFallo == null)
+            clipFallo = SintetizarTono("SFX_Fallo", 420f, 0.09f, FormaOnda.Sierra, 0.3f);
     }
 
     private enum FormaOnda { Senoidal, Sierra, Cuadrada }
@@ -254,29 +298,4 @@ public class AudioManager : MonoBehaviour
         return clip;
     }
 
-    private AudioClip SintetizarAmbienteMedico(string nombre, float duracion)
-    {
-        int sampleRate = 22050;
-        int totalSamples = (int)(sampleRate * duracion);
-        float[] samples = new float[totalSamples];
-
-        // Tonos suaves de calma y pulso cardíaco rítmico relajado
-        for (int i = 0; i < totalSamples; i++)
-        {
-            float t = (float)i / sampleRate;
-            float pad1 = Mathf.Sin(2 * Mathf.PI * 220f * t) * 0.12f;
-            float pad2 = Mathf.Sin(2 * Mathf.PI * 329.63f * t) * 0.08f;
-            float pad3 = Mathf.Sin(2 * Mathf.PI * 440f * t) * 0.05f;
-
-            // Pulso cada 1.5 segundos
-            float pulsoT = t % 1.5f;
-            float pulso = (pulsoT < 0.15f) ? Mathf.Sin(2 * Mathf.PI * 60f * pulsoT) * (1f - pulsoT / 0.15f) * 0.25f : 0f;
-
-            samples[i] = (pad1 + pad2 + pad3 + pulso) * 0.35f;
-        }
-
-        AudioClip clip = AudioClip.Create(nombre, totalSamples, 1, sampleRate, false);
-        clip.SetData(samples, 0);
-        return clip;
-    }
 }

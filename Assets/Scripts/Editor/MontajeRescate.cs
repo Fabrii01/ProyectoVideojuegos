@@ -22,15 +22,11 @@ public static partial class MontajeRescate
     private const string DIR_TIENDA = DIR + "/Tienda";
     private const string CIUDAD = "Assets/Versatile Studio Assets/Demo City By Versatile Studio/Prefabs/";
     private const string OBJETOS = "Assets/Kabungus/HouseholdItems/Prefabs/";
-    private const string DOCTOR_FBX = "Assets/Models/Personajes/Medico/Doctor.fbx";
     private const string HOSPITAL_FBX = "Assets/Models/hospital1.fbx";
     private const string RUTA_MONEDA = DIR_PREFAB + "/Moneda.prefab";
     private const string RUTA_ENEMIGO = DIR_PREFAB + "/Saqueador.prefab";
-
-    // Medidas del Doctor.fbx en sus unidades originales.
-    private const float ALTURA_MODELO = 25.6f;
-    private const float PIES_MODELO = 23.51f;
-    private const float ALTURA_PERSONAJE = 1.85f;
+    private const string RUTA_FURTIVO = DIR_PREFAB + "/Furtivo.prefab";
+    private const string RUTA_ANDROIDE = DIR_PREFAB + "/Androide.prefab";
 
     private static readonly Color ColFondo = new Color(0.06f, 0.08f, 0.11f, 0.96f);
     private static readonly Color ColTarjeta = new Color(0.12f, 0.15f, 0.2f, 1f);
@@ -49,18 +45,20 @@ public static partial class MontajeRescate
         CrearRecursos();
         MontarMenu();
         MontarHub();
-        MontarNivel1();
+        MontarNiveles();
 
         EditorBuildSettings.scenes = new[]
         {
             new EditorBuildSettingsScene("Assets/Scenes/MenuPrincipal.unity", true),
             new EditorBuildSettingsScene("Assets/Scenes/Hub.unity", true),
-            new EditorBuildSettingsScene("Assets/Scenes/Nivel1.unity", true)
+            new EditorBuildSettingsScene("Assets/Scenes/Nivel1.unity", true),
+            new EditorBuildSettingsScene("Assets/Scenes/Nivel2.unity", true),
+            new EditorBuildSettingsScene("Assets/Scenes/Nivel3.unity", true)
         };
 
         AssetDatabase.SaveAssets();
         EditorSceneManager.OpenScene("Assets/Scenes/MenuPrincipal.unity", OpenSceneMode.Single);
-        Debug.Log("[Montaje] Juego montado: MenuPrincipal, Hub y Nivel1.");
+        Debug.Log("[Montaje] Juego montado: menú, Hub y tres niveles.");
     }
 
     [MenuItem("SaludGame/Borrar monedas y compras")]
@@ -68,6 +66,13 @@ public static partial class MontajeRescate
     {
         DatosJugador.BorrarProgreso();
         Debug.Log("[Montaje] Progreso borrado.");
+    }
+
+    [MenuItem("SaludGame/Desbloquear todos los niveles")]
+    public static void DesbloquearNiveles()
+    {
+        DatosJugador.CompletarNivel(3);
+        Debug.Log("[Montaje] Niveles desbloqueados.");
     }
 
     [MenuItem("SaludGame/Dar 200 monedas de prueba")]
@@ -81,6 +86,8 @@ public static partial class MontajeRescate
 
     private static void CrearRecursos()
     {
+        pielesCreadas.Clear();
+
         foreach (string carpeta in new[] { DIR, DIR_MAT, DIR_PREFAB, DIR_TIENDA })
         {
             Directory.CreateDirectory(carpeta);
@@ -89,7 +96,8 @@ public static partial class MontajeRescate
 
         CrearTexturaParticula();
         CrearIconosMapa();
-        ConfigurarPersonajesKenney();
+        ConfigurarAnimaciones();
+        ConfigurarMusica();
         CrearRocas();
         CrearPrefabMoneda();
         CrearPrefabCasco();
@@ -97,10 +105,28 @@ public static partial class MontajeRescate
         CrearPrefabLinterna();
         CrearPrefabFuego();
         CrearPrefabHumo();
-        CrearPrefabEnemigo();
+        CrearPrefabEnemigo(RUTA_ENEMIGO, "Saqueador", PielSaqueador, new Color(0.6f, 0.08f, 0.07f), 100, 15, 5.2f);
+        CrearPrefabEnemigo(RUTA_FURTIVO, "Furtivo", PielFurtivo, new Color(0.2f, 0.35f, 0.12f), 100, 18, 5.6f);
+        CrearPrefabEnemigo(RUTA_ANDROIDE, "Androide", PielAndroide, new Color(0.9f, 0.15f, 0.1f), 135, 20, 5.9f);
+        CrearCascoEspacial();
         CrearCatalogo();
 
         AssetDatabase.SaveAssets();
+    }
+
+    private static void ConfigurarMusica()
+    {
+        foreach (string guid in AssetDatabase.FindAssets("t:AudioClip", new[] { "Assets/Externos/Musica" }))
+        {
+            string ruta = AssetDatabase.GUIDToAssetPath(guid);
+            AudioImporter importador = (AudioImporter)AssetImporter.GetAtPath(ruta);
+            AudioImporterSampleSettings ajustes = importador.defaultSampleSettings;
+            if (ajustes.loadType == AudioClipLoadType.Streaming) continue;
+
+            ajustes.loadType = AudioClipLoadType.Streaming;
+            importador.defaultSampleSettings = ajustes;
+            importador.SaveAndReimport();
+        }
     }
 
     private static T Cargar<T>(string ruta) where T : Object
@@ -162,16 +188,6 @@ public static partial class MontajeRescate
         suelo.SetTextureScale("_BaseMap", Vector2.one * 30f);
         EditorUtility.SetDirty(suelo);
         return suelo;
-    }
-
-    private static Material MatCuerpo(string nombre, Color tinte)
-    {
-        return CopiaMat(nombre, "Assets/Models/Personajes/Medico/textures 2/Materials/M_Doctor_Body.mat", tinte);
-    }
-
-    private static Material MatCabeza(string nombre, Color tinte)
-    {
-        return CopiaMat(nombre, "Assets/Models/Personajes/Medico/textures 2/Materials/M_Doctor_Head.mat", tinte);
     }
 
     private static void CrearTexturaParticula()
@@ -515,13 +531,11 @@ public static partial class MontajeRescate
         Object.DestroyImmediate(raiz);
     }
 
-    private static void CrearPrefabEnemigo()
+    private static void CrearPrefabEnemigo(string ruta, string nombre, Material piel, Color colorPano, int vidaEnemigo, int danio, float velocidad)
     {
-        Material cuerpo = MatCuerpo("SaqueadorCuerpo", new Color(0.3f, 0.26f, 0.27f));
-        Material cabeza = MatCabeza("SaqueadorCabeza", new Color(0.62f, 0.55f, 0.55f));
-        Material pano = Mat("PanoRojo", new Color(0.6f, 0.08f, 0.07f), 0.1f);
+        Material pano = Mat("Pano" + nombre, colorPano, 0.1f);
 
-        GameObject raiz = new GameObject("Saqueador");
+        GameObject raiz = new GameObject(nombre);
 
         NavMeshAgent agente = raiz.AddComponent<NavMeshAgent>();
         agente.radius = 0.4f;
@@ -535,16 +549,30 @@ public static partial class MontajeRescate
         colision.height = 1.9f;
         colision.radius = 0.4f;
 
-        GameObject modelo = CrearPersonaje(raiz.transform, "Modelo", cuerpo, cabeza, 0f);
+        GameObject modelo = CrearPersonaje(raiz.transform, "Modelo", piel, 0f);
 
-        // Pañuelo rojo para distinguirlo de los médicos a simple vista.
-        Primitiva(PrimitiveType.Sphere, raiz.transform, "Panuelo", new Vector3(0.05f, 1.72f, 0.03f), new Vector3(0.24f, 0.11f, 0.26f), pano);
+        // Pañuelo rojo atado a la cabeza para distinguirlo a simple vista.
+        Transform cabeza = Hueso(modelo, "Head");
+        GameObject panuelo = Primitiva(PrimitiveType.Sphere, raiz.transform, "Panuelo", Vector3.zero, new Vector3(0.36f, 0.14f, 0.36f), pano);
+        panuelo.transform.position = cabeza.position + Vector3.up * 0.2f;
+        panuelo.transform.SetParent(cabeza, true);
 
         GameObject alerta = new GameObject("Alerta");
         alerta.transform.SetParent(raiz.transform, false);
         alerta.transform.localPosition = Vector3.up * 2.45f;
         TextMeshPro signo = CrearTextoMundo(alerta, "!", 5f, new Color(1f, 0.15f, 0.1f));
         alerta.AddComponent<Billboard>();
+
+        GameObject barra = new GameObject("BarraVida");
+        barra.transform.SetParent(raiz.transform, false);
+        barra.transform.localPosition = Vector3.up * 2.15f;
+        barra.AddComponent<Billboard>();
+        Material fondo = Mat("BarraFondo", new Color(0.05f, 0.05f, 0.06f), 0f, 0f, new Color(0.02f, 0.02f, 0.02f));
+        Material vida = Mat("BarraVida", new Color(0.85f, 0.12f, 0.1f), 0f, 0f, new Color(0.8f, 0.1f, 0.08f));
+        Primitiva(PrimitiveType.Quad, barra.transform, "Fondo", Vector3.zero, new Vector3(1.04f, 0.14f, 1f), fondo);
+        GameObject relleno = Primitiva(PrimitiveType.Quad, barra.transform, "Relleno", new Vector3(0f, 0f, -0.01f), Vector3.one, vida);
+        barra.transform.localScale = new Vector3(1f, 0.1f, 1f);
+        barra.transform.Find("Fondo").localScale = new Vector3(1.04f, 1.4f, 1f);
 
         GameObject luzGO = new GameObject("LuzEstado");
         luzGO.transform.SetParent(raiz.transform, false);
@@ -557,11 +585,55 @@ public static partial class MontajeRescate
         EnemigoPatrulla enemigo = raiz.AddComponent<EnemigoPatrulla>();
         enemigo.indicadorAlerta = signo;
         enemigo.luzEstado = luz;
+        enemigo.animador = modelo.GetComponent<Animator>();
+        enemigo.barraVida = barra;
+        enemigo.rellenoVida = relleno.transform;
+        enemigo.premio = Cargar<GameObject>(RUTA_MONEDA);
+        enemigo.vidaMaxima = vidaEnemigo;
+        enemigo.danio = danio;
+        enemigo.velocidadPersecucion = velocidad;
 
-        raiz.AddComponent<AndarProcedural>().modelo = modelo.transform;
-
-        PrefabUtility.SaveAsPrefabAsset(raiz, RUTA_ENEMIGO);
+        PrefabUtility.SaveAsPrefabAsset(raiz, ruta);
         Object.DestroyImmediate(raiz);
+    }
+
+    /// <summary>Burbuja de vidrio del traje espacial; no se vende, la pone el nivel lunar.</summary>
+    private static void CrearCascoEspacial()
+    {
+        string ruta = DIR_MAT + "/VidrioCasco.mat";
+        Material vidrio = AssetDatabase.LoadAssetAtPath<Material>(ruta);
+        if (vidrio == null)
+        {
+            vidrio = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            AssetDatabase.CreateAsset(vidrio, ruta);
+        }
+
+        vidrio.SetFloat("_Surface", 1f);
+        vidrio.SetFloat("_Blend", 0f);
+        vidrio.SetFloat("_ZWrite", 0f);
+        vidrio.SetFloat("_Smoothness", 0.95f);
+        vidrio.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        vidrio.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        vidrio.SetColor("_BaseColor", new Color(0.6f, 0.82f, 1f, 0.28f));
+        vidrio.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        vidrio.SetOverrideTag("RenderType", "Transparent");
+        vidrio.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+        EditorUtility.SetDirty(vidrio);
+
+        GameObject raiz = new GameObject("CascoEspacial");
+        Primitiva(PrimitiveType.Sphere, raiz.transform, "Burbuja", Vector3.zero, Vector3.one * 0.46f, vidrio);
+        Primitiva(PrimitiveType.Cylinder, raiz.transform, "Cuello", new Vector3(0f, -0.21f, 0f), new Vector3(0.3f, 0.03f, 0.3f), Mat("Blanco", new Color(0.92f, 0.92f, 0.9f), 0.3f));
+        PrefabUtility.SaveAsPrefabAsset(raiz, DIR_TIENDA + "/CascoEspacial.prefab");
+        Object.DestroyImmediate(raiz);
+
+        ObjetoTienda objeto = ObtenerAsset<ObjetoTienda>(DIR_TIENDA + "/Fijo_CascoEspacial.asset");
+        objeto.id = "casco_espacial";
+        objeto.nombre = "Casco espacial";
+        objeto.prefabVisual = Cargar<GameObject>(DIR_TIENDA + "/CascoEspacial.prefab");
+        objeto.punto = PuntoEquipo.Cabeza;
+        objeto.escala = 1f;
+        CalcularEnHueso(objeto, new Vector3(0f, 0.15f, 0.03f), Vector3.zero);
+        EditorUtility.SetDirty(objeto);
     }
 
     private static void CrearCatalogo()
@@ -569,29 +641,33 @@ public static partial class MontajeRescate
         CatalogoTienda catalogo = ObtenerAsset<CatalogoTienda>(DIR_TIENDA + "/CatalogoTienda.asset");
         catalogo.objetos.Clear();
 
+        catalogo.objetos.Add(CrearObjeto("bate", "Bate de defensa", "Tu arma. Clic izquierdo o F para golpear.", 80,
+            new Color(0.8f, 0.3f, 0.2f), Cargar<GameObject>(OBJETOS + "Bat.prefab"), PuntoEquipo.ManoDerecha,
+            new Vector3(0f, -0.03f, 0.03f), new Vector3(35f, 0f, 0f), 0.75f, 0, 0f, 34));
+
         catalogo.objetos.Add(CrearObjeto("casco", "Casco de rescate", "Protege en derrumbes. +25 de salud máxima.", 40,
             new Color(0.98f, 0.72f, 0.08f), Cargar<GameObject>(DIR_TIENDA + "/CascoRescate.prefab"), PuntoEquipo.Cabeza,
-            new Vector3(0f, 0.19f, 0.03f), Vector3.zero, 0.9f, 25, 0f));
+            new Vector3(0f, 0.21f, 0.02f), Vector3.zero, 1.15f, 25, 0f));
 
         catalogo.objetos.Add(CrearObjeto("mochila", "Mochila de rescate", "Reparte mejor la carga. +1 de velocidad.", 60,
             new Color(0.75f, 0.14f, 0.13f), Cargar<GameObject>(DIR_TIENDA + "/MochilaRescate.prefab"), PuntoEquipo.Espalda,
-            new Vector3(0f, 0.02f, -0.2f), Vector3.zero, 0.85f, 0, 1f));
+            new Vector3(0f, -0.08f, -0.13f), Vector3.zero, 0.8f, 0, 1f));
 
         catalogo.objetos.Add(CrearObjeto("linterna", "Linterna de pecho", "Ilumina el camino entre el polvo y el humo.", 30,
             new Color(0.3f, 0.65f, 0.95f), Cargar<GameObject>(DIR_TIENDA + "/LinternaPecho.prefab"), PuntoEquipo.Pecho,
-            new Vector3(0.09f, 0.16f, 0.13f), Vector3.zero, 0.55f, 0, 0f));
+            new Vector3(0.09f, -0.02f, 0.14f), Vector3.zero, 0.55f, 0, 0f));
 
         catalogo.objetos.Add(CrearObjeto("palanca", "Palanca de rescate", "Sirve para abrir paso entre los escombros.", 50,
             new Color(0.5f, 0.55f, 0.6f), Cargar<GameObject>(OBJETOS + "Crowbar.prefab"), PuntoEquipo.Cintura,
-            new Vector3(-0.24f, -0.02f, 0f), new Vector3(0f, 90f, 8f), 1f, 0, 0f));
+            new Vector3(-0.2f, 0f, 0f), new Vector3(0f, 90f, 8f), 0.9f, 0, 0f));
 
         catalogo.objetos.Add(CrearObjeto("prismaticos", "Prismáticos", "Para ubicar a los heridos desde lejos.", 35,
             new Color(0.2f, 0.45f, 0.35f), Cargar<GameObject>(OBJETOS + "Binoculars.prefab"), PuntoEquipo.Pecho,
-            new Vector3(-0.04f, -0.14f, 0.15f), Vector3.zero, 0.6f, 0, 0f));
+            new Vector3(-0.05f, -0.14f, 0.13f), Vector3.zero, 0.6f, 0, 0f));
 
         catalogo.objetos.Add(CrearObjeto("botiquin", "Botiquín de cintura", "Primeros auxilios a mano. +15 de salud máxima.", 45,
             new Color(0.2f, 0.7f, 0.4f), Cargar<GameObject>(OBJETOS + "Medkit.prefab"), PuntoEquipo.Cintura,
-            new Vector3(0.23f, 0f, 0f), new Vector3(0f, 90f, 0f), 0.38f, 15, 0f));
+            new Vector3(0.2f, 0f, 0f), new Vector3(0f, 90f, 0f), 0.36f, 15, 0f));
 
         EditorUtility.SetDirty(catalogo);
     }
@@ -608,7 +684,7 @@ public static partial class MontajeRescate
     }
 
     private static ObjetoTienda CrearObjeto(string id, string nombre, string descripcion, int precio, Color color, GameObject prefab,
-        PuntoEquipo punto, Vector3 posicion, Vector3 rotacion, float escala, int vida, float velocidad)
+        PuntoEquipo punto, Vector3 desplazamiento, Vector3 giro, float escala, int vida, float velocidad, int danio = 0)
     {
         ObjetoTienda objeto = ObtenerAsset<ObjetoTienda>(DIR_TIENDA + "/Objeto_" + id + ".asset");
         objeto.id = id;
@@ -618,11 +694,11 @@ public static partial class MontajeRescate
         objeto.colorIcono = color;
         objeto.prefabVisual = prefab;
         objeto.punto = punto;
-        objeto.posicion = posicion;
-        objeto.rotacion = rotacion;
         objeto.escala = escala;
         objeto.vidaExtra = vida;
         objeto.velocidadExtra = velocidad;
+        objeto.danioArma = danio;
+        CalcularEnHueso(objeto, desplazamiento, giro);
         EditorUtility.SetDirty(objeto);
         return objeto;
     }
@@ -630,31 +706,6 @@ public static partial class MontajeRescate
     #endregion
 
     #region Piezas del escenario
-
-    /// <summary>Crea un personaje con el modelo Doctor a tamaño humano. piesY es la altura local de sus pies.</summary>
-    private static GameObject CrearPersonaje(Transform padre, string nombre, Material cuerpo, Material cabeza, float piesY)
-    {
-        GameObject modelo = (GameObject)PrefabUtility.InstantiatePrefab(Cargar<GameObject>(DOCTOR_FBX), padre);
-        float escala = ALTURA_PERSONAJE / ALTURA_MODELO;
-
-        modelo.name = nombre;
-        modelo.transform.localScale = Vector3.one * escala;
-        modelo.transform.localPosition = new Vector3(0f, piesY + PIES_MODELO * escala, 0f);
-        modelo.transform.localRotation = Quaternion.identity;
-
-        foreach (SkinnedMeshRenderer parte in modelo.GetComponentsInChildren<SkinnedMeshRenderer>(true))
-        {
-            Material material = parte.name == "head" ? cabeza : cuerpo;
-            Material[] materiales = new Material[parte.sharedMaterials.Length];
-            for (int i = 0; i < materiales.Length; i++) materiales[i] = material;
-            parte.sharedMaterials = materiales;
-        }
-
-        return modelo;
-    }
-
-    private static Material CuerpoDoctor => Cargar<Material>("Assets/Models/Personajes/Medico/textures 2/Materials/M_Doctor_Body.mat");
-    private static Material CabezaDoctor => Cargar<Material>("Assets/Models/Personajes/Medico/textures 2/Materials/M_Doctor_Head.mat");
 
     /// <summary>Instancia un prefab y le pone una colisión de caja según lo que mide.</summary>
     private static GameObject Poner(string ruta, Transform padre, Vector3 pos, float giroY = 0f, float escala = 1f, bool solido = true)
@@ -813,7 +864,7 @@ public static partial class MontajeRescate
     }
 
     /// <summary>Paciente tendido en una camilla, para usarse como decorado o como objetivo.</summary>
-    private static GameObject Camilla(Transform padre, Vector3 pos, float giroY)
+    private static GameObject Camilla(Transform padre, Vector3 pos, float giroY, Material piel = null)
     {
         GameObject raiz = new GameObject("Camilla");
         raiz.transform.SetParent(padre, false);
@@ -829,12 +880,9 @@ public static partial class MontajeRescate
             }
         }
 
-        GameObject herido = CrearPersonaje(raiz.transform, "Herido", CuerpoDoctor, CabezaDoctor, 0f);
-        herido.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
-        herido.transform.localPosition = new Vector3(-0.06f, 0.78f, -0.92f + PIES_MODELO * ALTURA_PERSONAJE / ALTURA_MODELO);
-
         raiz.transform.position = pos;
         raiz.transform.rotation = Quaternion.Euler(0f, giroY, 0f);
+        Tendido(raiz.transform, new Vector3(0f, 0.72f, 0.1f), piel != null ? piel : PielVecino(3));
         return raiz;
     }
 
@@ -892,6 +940,9 @@ public static partial class MontajeRescate
     /// <summary>Deja el jugador listo: modelo a escala, equipo, cámara y bonificaciones.</summary>
     private static PlayerController PrepararJugador(GameObject jugador)
     {
+        // Limpia componentes de scripts que ya no existen en el proyecto.
+        GameObjectUtility.RemoveMonoBehavioursWithMissingScript(jugador);
+
         MeshRenderer capsulaVisual = jugador.GetComponent<MeshRenderer>();
         if (capsulaVisual != null) capsulaVisual.enabled = false;
 
@@ -901,21 +952,20 @@ public static partial class MontajeRescate
             if (hijo != null) Object.DestroyImmediate(hijo.gameObject);
         }
 
-        GameObject modelo = CrearPersonaje(jugador.transform, "Modelo", CuerpoDoctor, CabezaDoctor, -1f);
+        GameObject modelo = CrearPersonaje(jugador.transform, "Modelo", PielRescatista, -1f);
 
         PlayerController controlador = jugador.GetComponent<PlayerController>();
         controlador.modeloVisualDoctor = modelo.transform;
-        controlador.velocidadMovimiento = 6f;
-        controlador.velocidadCorrer = 9.5f;
+        controlador.animador = modelo.GetComponent<Animator>();
+        controlador.velocidadMovimiento = 4.2f;
+        controlador.velocidadCorrer = 8f;
         controlador.fuerzaSalto = 7f;
 
         EquipamientoJugador equipo = jugador.GetComponent<EquipamientoJugador>();
         if (equipo == null) equipo = jugador.AddComponent<EquipamientoJugador>();
         equipo.catalogo = Cargar<CatalogoTienda>(DIR_TIENDA + "/CatalogoTienda.asset");
 
-        AndarProcedural andar = jugador.GetComponent<AndarProcedural>();
-        if (andar == null) andar = jugador.AddComponent<AndarProcedural>();
-        andar.modelo = modelo.transform;
+        if (jugador.GetComponent<AtaqueJugador>() == null) jugador.AddComponent<AtaqueJugador>();
 
         Camera camara = jugador.GetComponentInChildren<Camera>(true);
         if (camara == null) camara = Camera.main;

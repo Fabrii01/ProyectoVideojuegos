@@ -103,8 +103,8 @@ public class MinimapaUI : MonoBehaviour
         {
             Marca marca = marcas[i];
 
-            // Si el objeto ya no existe es porque se recogió.
-            if (marca.objetivo == null)
+            // Si el objeto ya no existe es porque se recogió o porque cayó el enemigo.
+            if (marca.objetivo == null || (marca.enemigo != null && marca.enemigo.EstaDerrotado))
             {
                 Destroy(marca.icono.gameObject);
                 marcas.RemoveAt(i);

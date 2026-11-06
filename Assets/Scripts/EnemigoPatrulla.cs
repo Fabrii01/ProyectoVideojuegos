@@ -4,7 +4,7 @@ using UnityEngine.AI;
 
 /// <summary>
 /// Saqueador que patrulla entre puntos, persigue al jugador si lo ve y lo golpea si lo alcanza.
-/// Vuelve a su ruta cuando el jugador se aleja o se esconde.
+/// Vuelve a su ruta cuando el jugador se aleja o se esconde. Con un arma se le puede derrotar.
 /// </summary>
 [RequireComponent(typeof(NavMeshAgent))]
 public class EnemigoPatrulla : MonoBehaviour
@@ -30,13 +30,22 @@ public class EnemigoPatrulla : MonoBehaviour
     public float esperaEntreGolpes = 1.3f;
     public float fuerzaEmpuje = 7f;
 
+    [Header("Salud")]
+    public int vidaMaxima = 100;
+    public GameObject barraVida;
+    public Transform rellenoVida;
+    public GameObject premio;
+    public int premiosAlCaer = 3;
+
     [Header("Avisos")]
+    public Animator animador;
     public TextMeshPro indicadorAlerta;
     public Light luzEstado;
     public Color colorCalma = new Color(1f, 0.75f, 0.2f);
     public Color colorAlerta = new Color(1f, 0.12f, 0.08f);
 
-    public bool EstaPersiguiendo => estado == Estado.Persecucion;
+    public bool EstaPersiguiendo => !EstaDerrotado && estado == Estado.Persecucion;
+    public bool EstaDerrotado => vida <= 0;
 
     private NavMeshAgent agente;
     private Transform objetivo;
@@ -46,10 +55,13 @@ public class EnemigoPatrulla : MonoBehaviour
     private float finPausa;
     private float ultimaVezVisto;
     private float proximoGolpe;
+    private int vida;
 
     private void Start()
     {
         agente = GetComponent<NavMeshAgent>();
+        vida = vidaMaxima;
+        if (barraVida != null) barraVida.SetActive(false);
 
         GameObject objetoJugador = GameObject.FindGameObjectWithTag("Player");
         if (objetoJugador != null)
@@ -64,7 +76,9 @@ public class EnemigoPatrulla : MonoBehaviour
 
     private void Update()
     {
-        if (objetivo == null || !agente.isOnNavMesh) return;
+        if (EstaDerrotado || objetivo == null || !agente.isOnNavMesh) return;
+
+        if (animador != null) animador.SetFloat("Velocidad", agente.velocity.magnitude);
 
         bool loVe = PuedeVerJugador();
         if (loVe) ultimaVezVisto = Time.time;
@@ -107,6 +121,7 @@ public class EnemigoPatrulla : MonoBehaviour
         {
             proximoGolpe = Time.time + esperaEntreGolpes;
             Vector3 direccion = (objetivo.position - transform.position).normalized;
+            if (animador != null) animador.SetTrigger("Golpear");
             jugador.RecibirDanio(danio);
             jugador.Empujar(direccion * fuerzaEmpuje);
         }
@@ -156,6 +171,53 @@ public class EnemigoPatrulla : MonoBehaviour
         if (indicadorAlerta != null) indicadorAlerta.gameObject.SetActive(alerta);
         if (luzEstado != null) luzEstado.color = alerta ? colorAlerta : colorCalma;
         if (sonar && AudioManager.Instancia != null) AudioManager.Instancia.PlayAlerta();
+    }
+
+    /// <summary>Recibe un golpe del jugador: lo empuja, lo pone en alerta y le quita salud.</summary>
+    public void RecibirGolpe(int cantidad, Vector3 direccion)
+    {
+        if (EstaDerrotado) return;
+
+        vida -= cantidad;
+        proximoGolpe = Time.time + 0.8f;
+        ultimaVezVisto = Time.time;
+
+        if (barraVida != null) barraVida.SetActive(true);
+        if (rellenoVida != null)
+        {
+            float parte = Mathf.Clamp01((float)vida / vidaMaxima);
+            rellenoVida.localScale = new Vector3(parte, 1f, 1f);
+            rellenoVida.localPosition = new Vector3((parte - 1f) * 0.5f, 0f, -0.01f);
+        }
+
+        if (EstaDerrotado)
+        {
+            Caer();
+            return;
+        }
+
+        if (agente.isOnNavMesh) agente.Move(direccion.normalized * 0.7f);
+        if (estado != Estado.Persecucion) CambiarEstado(Estado.Persecucion, true);
+    }
+
+    private void Caer()
+    {
+        agente.enabled = false;
+        GetComponent<Collider>().enabled = false;
+
+        if (barraVida != null) barraVida.SetActive(false);
+        if (indicadorAlerta != null) indicadorAlerta.gameObject.SetActive(false);
+        if (luzEstado != null) luzEstado.enabled = false;
+        if (animador != null) animador.SetTrigger("Morir");
+
+        for (int i = 0; i < premiosAlCaer && premio != null; i++)
+        {
+            float angulo = i * Mathf.PI * 2f / premiosAlCaer;
+            Vector3 lado = new Vector3(Mathf.Cos(angulo), 0f, Mathf.Sin(angulo)) * 1.2f;
+            Instantiate(premio, transform.position + lado + Vector3.up * 0.9f, Quaternion.identity);
+        }
+
+        Destroy(gameObject, 3f);
     }
 
     private void OnDrawGizmosSelected()

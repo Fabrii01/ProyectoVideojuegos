@@ -3,16 +3,18 @@ using UnityEngine;
 using UnityEngine.AI;
 
 /// <summary>
-/// Persona del Hub: pasea entre puntos o se queda en su sitio. Si el jugador se acerca,
-/// se detiene, lo mira y le da un consejo de salud.
+/// Persona del Hub: pasea, trabaja o se queda en su sitio. Si el jugador se acerca,
+/// se detiene, lo mira y le da un consejo de salud en el cuadro de diálogo.
 /// </summary>
 [RequireComponent(typeof(NavMeshAgent))]
 public class NPCResidente : MonoBehaviour
 {
+    public string nombre = "Vecino";
     public Transform[] puntos;
     public bool pasea = true;
+    public bool trabajando;
     public Animator animador;
-    public TextMeshPro globo;
+    public TextMeshPro marcaCharla;
     [TextArea(1, 3)] public string[] frases;
     public float radioCharla = 2.8f;
     public float pausaMinima = 1.5f;
@@ -32,7 +34,8 @@ public class NPCResidente : MonoBehaviour
         GameObject objetoJugador = GameObject.FindGameObjectWithTag("Player");
         if (objetoJugador != null) jugador = objetoJugador.transform;
 
-        if (globo != null) globo.gameObject.SetActive(false);
+        if (marcaCharla != null) marcaCharla.gameObject.SetActive(false);
+        if (animador != null) animador.SetBool("Trabajando", trabajando);
         if (pasea) IrAOtroPunto();
     }
 
@@ -42,13 +45,7 @@ public class NPCResidente : MonoBehaviour
         if (jugador == null || !agente.isOnNavMesh) return;
 
         bool cerca = Vector3.Distance(transform.position, jugador.position) <= radioCharla;
-
-        if (cerca != hablando)
-        {
-            hablando = cerca;
-            agente.isStopped = cerca;
-            MostrarGlobo(cerca);
-        }
+        if (cerca != hablando) CambiarCharla(cerca);
 
         if (hablando)
         {
@@ -58,6 +55,26 @@ public class NPCResidente : MonoBehaviour
 
         if (pasea) Pasear();
         else transform.rotation = Quaternion.Slerp(transform.rotation, miradaInicial, Time.deltaTime * 3f);
+    }
+
+    private void CambiarCharla(bool iniciar)
+    {
+        hablando = iniciar;
+        agente.isStopped = iniciar;
+
+        if (marcaCharla != null) marcaCharla.gameObject.SetActive(iniciar);
+        if (animador != null) animador.SetBool("Trabajando", trabajando && !iniciar);
+
+        if (DialogoUI.Instancia == null) return;
+
+        if (iniciar && frases != null && frases.Length > 0)
+        {
+            DialogoUI.Instancia.Mostrar(this, nombre, frases[Random.Range(0, frases.Length)]);
+        }
+        else
+        {
+            DialogoUI.Instancia.Ocultar(this);
+        }
     }
 
     private void Pasear()
@@ -88,16 +105,5 @@ public class NPCResidente : MonoBehaviour
         if (direccion.sqrMagnitude < 0.01f) return;
 
         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direccion), Time.deltaTime * 6f);
-    }
-
-    private void MostrarGlobo(bool visible)
-    {
-        if (globo == null) return;
-
-        if (visible && frases != null && frases.Length > 0)
-        {
-            globo.text = "<mark=#0B0F15D9>  " + frases[Random.Range(0, frases.Length)] + "  </mark>";
-        }
-        globo.gameObject.SetActive(visible);
     }
 }

@@ -1,0 +1,20 @@
+Recursos externos usados en el proyecto. Todos se usan bajo CC0 (dominio público).
+
+Kenney (kenney.nl)
+  Car Kit, Nature Kit, Space Kit, Survival Kit, City Kit (Commercial)
+
+Quaternius (opengameart.org/content/animated-human-low-poly)
+  Animated Human: protagonista, enemigos y sus animaciones
+
+Poly Haven (polyhaven.com)
+  Cielos: Kloofendal 48d Partly Cloudy, Belfast Sunset, Industrial Sunset (Pure Sky)
+  Suelos: Leafy Grass, Herringbone Pavement 03, Cracked Concrete, Forest Floor, Moon 01
+
+Música (opengameart.org)
+  Menú: "Tragic ambient main menu" (publicada con licencia doble; se usa la opción CC0)
+  Hub: "Town Theme RPG" de cynicmusic (pixelsphere.org)
+  Nivel 1: "Town in ruins loop" de Brandon Morris (licencia doble; se usa la opción CC0)
+  Nivel 2: "Creepy Forest" (licencia doble; se usa la opción CC0)
+  Nivel 3: "Background Space Track" (My Very Own Dead Ship)
+  Combate: "Battle Theme A" de cynicmusic (pixelsphere.org)
+  Combate en la Luna: "Fast Fight / Battle Music"

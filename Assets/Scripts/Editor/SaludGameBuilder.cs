@@ -8,9 +8,6 @@ using TMPro;
 
 public static class SaludGameBuilder
 {
-    private const string PATH_DOCTOR_FBX = "Assets/Models/Personajes/Medico/Doctor.fbx";
-    private const string PATH_MAT_BODY = "Assets/Models/Personajes/Medico/textures 2/Materials/M_Doctor_Body.mat";
-    private const string PATH_MAT_HEAD = "Assets/Models/Personajes/Medico/textures 2/Materials/M_Doctor_Head.mat";
     private const string PATH_MAT_ITEMS = "Assets/Kabungus/HouseholdItems/Scenes/URP/M_HouseholdItems_URP.mat";
 
     private const string PATH_SYRINGE_FBX = "Assets/Kabungus/HouseholdItems/Models/Syringe.fbx";
@@ -123,12 +120,11 @@ public static class SaludGameBuilder
     /// <summary>Crea el panel de ajustes del menú principal.</summary>
     public static void CrearPanelAjustes(Transform canvas, MenuPrincipalController controller)
     {
-
         GameObject panelAjustes = new GameObject("PanelAjustes");
         panelAjustes.transform.SetParent(canvas, false);
         RectTransform rtAj = panelAjustes.AddComponent<RectTransform>();
-        rtAj.anchorMin = new Vector2(0.15f, 0.08f);
-        rtAj.anchorMax = new Vector2(0.85f, 0.92f);
+        rtAj.anchorMin = new Vector2(0.3f, 0.14f);
+        rtAj.anchorMax = new Vector2(0.7f, 0.86f);
         rtAj.sizeDelta = Vector2.zero;
 
         Image imgAj = panelAjustes.AddComponent<Image>();
@@ -141,29 +137,20 @@ public static class SaludGameBuilder
         uiAjustes.panelAjustes = panelAjustes;
         controller.panelAjustes = panelAjustes;
 
-        CrearTextoUI(panelAjustes.transform, "TituloAjustes", "AJUSTES", 42, new Vector2(0.5f, 0.92f), new Vector2(700, 56), TextAlignmentOptions.Center, Color.white).GetComponent<TextMeshProUGUI>().fontStyle = FontStyles.Bold;
+        CrearTextoUI(panelAjustes.transform, "TituloAjustes", "AJUSTES", 42, new Vector2(0.5f, 0.9f), new Vector2(600, 56), TextAlignmentOptions.Center, Color.white).GetComponent<TextMeshProUGUI>().fontStyle = FontStyles.Bold;
 
-        // Audio
-        CrearTextoUI(panelAjustes.transform, "HeaderAudio", "AUDIO", 24, new Vector2(0.28f, 0.82f), new Vector2(300, 35), TextAlignmentOptions.Left, Color.white);
-        uiAjustes.sliderMaster = CrearSliderConEtiqueta(panelAjustes.transform, "SliderMaster", "Volumen General", 0.8f, new Vector2(0.28f, 0.74f), out uiAjustes.textoMaster);
-        uiAjustes.sliderSFX = CrearSliderConEtiqueta(panelAjustes.transform, "SliderSFX", "Efectos (SFX)", 0.9f, new Vector2(0.28f, 0.64f), out uiAjustes.textoSFX);
-        uiAjustes.sliderMusica = CrearSliderConEtiqueta(panelAjustes.transform, "SliderMusica", "Música Ambiente", 0.7f, new Vector2(0.28f, 0.54f), out uiAjustes.textoMusica);
+        CrearTextoUI(panelAjustes.transform, "HeaderAudio", "AUDIO", 24, new Vector2(0.5f, 0.78f), new Vector2(300, 35), TextAlignmentOptions.Center, Color.white);
+        uiAjustes.sliderMaster = CrearSliderConEtiqueta(panelAjustes.transform, "SliderMaster", "Volumen general", 0.8f, new Vector2(0.5f, 0.69f), out uiAjustes.textoMaster);
+        uiAjustes.sliderSFX = CrearSliderConEtiqueta(panelAjustes.transform, "SliderSFX", "Efectos", 0.9f, new Vector2(0.5f, 0.58f), out uiAjustes.textoSFX);
+        uiAjustes.sliderMusica = CrearSliderConEtiqueta(panelAjustes.transform, "SliderMusica", "Música", 0.7f, new Vector2(0.5f, 0.47f), out uiAjustes.textoMusica);
 
-        // Video / Pantalla
-        CrearTextoUI(panelAjustes.transform, "HeaderVideo", "PANTALLA Y GRÁFICOS", 24, new Vector2(0.72f, 0.82f), new Vector2(300, 35), TextAlignmentOptions.Left, Color.white);
-        uiAjustes.dropdownCalidad = CrearDropdownConEtiqueta(panelAjustes.transform, "DropdownCalidad", "Calidad Gráfica", new Vector2(0.72f, 0.74f));
-        uiAjustes.togglePantallaCompleta = CrearToggleConEtiqueta(panelAjustes.transform, "TogglePantallaCompleta", "Pantalla Completa", true, new Vector2(0.72f, 0.64f));
-        uiAjustes.dropdownResolucion = CrearDropdownConEtiqueta(panelAjustes.transform, "DropdownResolucion", "Resolución de Pantalla", new Vector2(0.72f, 0.54f));
+        CrearTextoUI(panelAjustes.transform, "HeaderControles", "CONTROLES", 24, new Vector2(0.5f, 0.36f), new Vector2(300, 35), TextAlignmentOptions.Center, Color.white);
+        uiAjustes.sliderSensibilidad = CrearSliderConEtiqueta(panelAjustes.transform, "SliderSensibilidad", "Sensibilidad del ratón", 3.0f, new Vector2(0.5f, 0.27f), out uiAjustes.textoSensibilidad, 0.5f, 10f);
 
-        // Controles
-        CrearTextoUI(panelAjustes.transform, "HeaderControles", "CONTROLES", 24, new Vector2(0.5f, 0.42f), new Vector2(500, 35), TextAlignmentOptions.Center, Color.white);
-        uiAjustes.sliderSensibilidad = CrearSliderConEtiqueta(panelAjustes.transform, "SliderSensibilidad", "Sensibilidad Ratón", 3.0f, new Vector2(0.35f, 0.32f), out uiAjustes.textoSensibilidad, 0.5f, 10f);
-        uiAjustes.toggleInvertirY = CrearToggleConEtiqueta(panelAjustes.transform, "ToggleInvertirY", "Invertir Eje Y", false, new Vector2(0.72f, 0.32f));
-
-        GameObject btnRestablecer = CrearBotonUI(panelAjustes.transform, "BtnRestablecer", "Restablecer valores", 20, new Vector2(0.35f, 0.12f), new Vector2(240, 48), new Color(0.4f, 0.4f, 0.4f));
+        GameObject btnRestablecer = CrearBotonUI(panelAjustes.transform, "BtnRestablecer", "Restablecer valores", 20, new Vector2(0.3f, 0.1f), new Vector2(240, 52), new Color(0.25f, 0.29f, 0.35f));
         uiAjustes.botonRestablecer = btnRestablecer.GetComponent<Button>();
 
-        GameObject btnCerrar = CrearBotonUI(panelAjustes.transform, "BtnCerrar", "Guardar y volver", 22, new Vector2(0.65f, 0.12f), new Vector2(260, 48), new Color(0.15f, 0.6f, 0.4f));
+        GameObject btnCerrar = CrearBotonUI(panelAjustes.transform, "BtnCerrar", "Guardar y volver", 22, new Vector2(0.7f, 0.1f), new Vector2(240, 52), new Color(0.95f, 0.5f, 0.1f));
         uiAjustes.botonCerrar = btnCerrar.GetComponent<Button>();
         UnityEditor.Events.UnityEventTools.AddPersistentListener(btnCerrar.GetComponent<Button>().onClick, controller.CerrarAjustes);
 
@@ -289,76 +276,6 @@ public static class SaludGameBuilder
         slider.fillRect = rtFill;
 
         return slider;
-    }
-
-    public static Toggle CrearToggleConEtiqueta(Transform padre, string nombre, string etiqueta, bool valorInicial, Vector2 anclaPos)
-    {
-        GameObject contenedor = new GameObject(nombre + "_Contenedor");
-        contenedor.transform.SetParent(padre, false);
-        RectTransform rtCont = contenedor.AddComponent<RectTransform>();
-        rtCont.anchorMin = anclaPos;
-        rtCont.anchorMax = anclaPos;
-        rtCont.pivot = new Vector2(0.5f, 0.5f);
-        rtCont.sizeDelta = new Vector2(340, 40);
-
-        CrearTextoUI(contenedor.transform, "Etiqueta", etiqueta, 18, new Vector2(0.4f, 0.5f), new Vector2(240, 30), TextAlignmentOptions.Left, Color.white);
-
-        GameObject toggleGO = new GameObject(nombre);
-        toggleGO.transform.SetParent(contenedor.transform, false);
-        RectTransform rtTog = toggleGO.AddComponent<RectTransform>();
-        rtTog.anchorMin = new Vector2(0.85f, 0.5f);
-        rtTog.anchorMax = new Vector2(0.85f, 0.5f);
-        rtTog.sizeDelta = new Vector2(28, 28);
-
-        Image imgBg = toggleGO.AddComponent<Image>();
-        imgBg.color = new Color(0.2f, 0.3f, 0.45f);
-
-        Toggle toggle = toggleGO.AddComponent<Toggle>();
-        toggle.isOn = valorInicial;
-
-        GameObject checkGO = new GameObject("Checkmark");
-        checkGO.transform.SetParent(toggleGO.transform, false);
-        RectTransform rtCheck = checkGO.AddComponent<RectTransform>();
-        rtCheck.anchorMin = new Vector2(0.15f, 0.15f);
-        rtCheck.anchorMax = new Vector2(0.85f, 0.85f);
-        rtCheck.sizeDelta = Vector2.zero;
-        Image checkImg = checkGO.AddComponent<Image>();
-        checkImg.color = new Color(0.2f, 0.9f, 0.5f);
-
-        toggle.graphic = checkImg;
-        checkImg.enabled = valorInicial;
-
-        return toggle;
-    }
-
-    public static TMP_Dropdown CrearDropdownConEtiqueta(Transform padre, string nombre, string etiqueta, Vector2 anclaPos)
-    {
-        GameObject contenedor = new GameObject(nombre + "_Contenedor");
-        contenedor.transform.SetParent(padre, false);
-        RectTransform rtCont = contenedor.AddComponent<RectTransform>();
-        rtCont.anchorMin = anclaPos;
-        rtCont.anchorMax = anclaPos;
-        rtCont.pivot = new Vector2(0.5f, 0.5f);
-        rtCont.sizeDelta = new Vector2(340, 50);
-
-        CrearTextoUI(contenedor.transform, "Etiqueta", etiqueta, 18, new Vector2(0.5f, 0.8f), new Vector2(340, 24), TextAlignmentOptions.Left, Color.white);
-
-        GameObject dropGO = new GameObject(nombre);
-        dropGO.transform.SetParent(contenedor.transform, false);
-        RectTransform rtDrop = dropGO.AddComponent<RectTransform>();
-        rtDrop.anchorMin = new Vector2(0.05f, 0.1f);
-        rtDrop.anchorMax = new Vector2(0.95f, 0.55f);
-        rtDrop.sizeDelta = Vector2.zero;
-
-        Image imgBg = dropGO.AddComponent<Image>();
-        imgBg.color = new Color(0.15f, 0.22f, 0.35f);
-
-        TMP_Dropdown dropdown = dropGO.AddComponent<TMP_Dropdown>();
-
-        GameObject captionGO = CrearTextoUI(dropGO.transform, "CaptionText", "Opción", 16, new Vector2(0.45f, 0.5f), new Vector2(250, 25), TextAlignmentOptions.Left, Color.white);
-        dropdown.captionText = captionGO.GetComponent<TextMeshProUGUI>();
-
-        return dropdown;
     }
 
     #endregion

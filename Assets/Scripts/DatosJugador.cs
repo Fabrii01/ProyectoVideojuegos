@@ -11,6 +11,7 @@ public static class DatosJugador
     private const string CLAVE_MONEDAS = "Rescate_Monedas";
     private const string CLAVE_COMPRADOS = "Rescate_Comprados";
     private const string CLAVE_EQUIPADOS = "Rescate_Equipados";
+    private const string CLAVE_NIVEL = "Rescate_NivelCompletado";
 
     /// <summary>Se dispara cuando cambian las monedas, las compras o el equipo.</summary>
     public static event Action OnCambio;
@@ -76,11 +77,26 @@ public static class DatosJugador
         Guardar();
     }
 
+    public static bool NivelCompletado(int numero)
+    {
+        return PlayerPrefs.GetInt(CLAVE_NIVEL, 0) >= numero;
+    }
+
+    /// <summary>Guarda el nivel más alto terminado; los niveles se abren en orden.</summary>
+    public static void CompletarNivel(int numero)
+    {
+        if (NivelCompletado(numero)) return;
+
+        PlayerPrefs.SetInt(CLAVE_NIVEL, numero);
+        PlayerPrefs.Save();
+    }
+
     public static void BorrarProgreso()
     {
         PlayerPrefs.DeleteKey(CLAVE_MONEDAS);
         PlayerPrefs.DeleteKey(CLAVE_COMPRADOS);
         PlayerPrefs.DeleteKey(CLAVE_EQUIPADOS);
+        PlayerPrefs.DeleteKey(CLAVE_NIVEL);
         PlayerPrefs.Save();
         cargado = false;
         Cargar();

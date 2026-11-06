@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Controlador principal del rescatista: movimiento, salto, salud, inventario del nivel,
-/// animación procedural y menú de pausa.
+/// animaciones y menú de pausa.
 /// </summary>
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
@@ -18,6 +18,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Referencia al Modelo Visual")]
     public Transform modeloVisualDoctor;
+    public Animator animador;
 
     [Header("Estadísticas de Salud")]
     public int vidaMaxima = 100;
@@ -61,10 +62,6 @@ public class PlayerController : MonoBehaviour
 
     private int VidaTotal => vidaMaxima + vidaExtra;
 
-    // Variables de animación procedural
-    private float pasoProceduralTimer = 0f;
-    private Vector3 posicionBaseModelo = Vector3.zero;
-
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -103,21 +100,6 @@ public class PlayerController : MonoBehaviour
             camaraJugador = Camera.main;
         }
 
-        // Buscar modelo visual si no se asignó manualmente
-        if (modeloVisualDoctor == null)
-        {
-            Transform tDoctor = transform.Find("Doctor");
-            if (tDoctor != null)
-            {
-                modeloVisualDoctor = tDoctor;
-            }
-        }
-
-        if (modeloVisualDoctor != null)
-        {
-            posicionBaseModelo = modeloVisualDoctor.localPosition;
-        }
-
         ActualizarHUD();
     }
 
@@ -130,7 +112,7 @@ public class PlayerController : MonoBehaviour
         enElSuelo = DetectarSuelo();
         ProcesarMovimiento();
         ProcesarSalto();
-        ActualizarAnimacionProcedural();
+        ActualizarAnimador();
 
         if (tiempoInvulnerable > 0f)
         {
@@ -220,32 +202,18 @@ public class PlayerController : MonoBehaviour
             rb.linearVelocity = velocidad;
             rb.AddForce(Vector3.up * fuerzaSalto, ForceMode.Impulse);
             esperaSalto = 0.25f;
+            if (animador != null) animador.SetTrigger("Saltar");
         }
     }
 
-    private void ActualizarAnimacionProcedural()
+    private void ActualizarAnimador()
     {
-        if (modeloVisualDoctor == null) return;
+        if (animador == null) return;
 
-        Vector3 velHorizontal = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-        float rapidez = velHorizontal.magnitude;
-
-        if (rapidez > 0.5f && enElSuelo)
-        {
-            pasoProceduralTimer += Time.deltaTime * rapidez * 2.2f;
-            float balanceo = Mathf.Sin(pasoProceduralTimer) * 0.05f;
-            float inclinacion = Mathf.Cos(pasoProceduralTimer * 0.5f) * 2.5f;
-
-            modeloVisualDoctor.localPosition = posicionBaseModelo + new Vector3(0f, Mathf.Abs(balanceo) * 0.1f, 0f);
-            modeloVisualDoctor.localRotation = Quaternion.Euler(inclinacion, modeloVisualDoctor.localEulerAngles.y, balanceo * 10f);
-        }
-        else
-        {
-            // Respiración / Balanceo sutil en espera
-            float respiracion = Mathf.Sin(Time.time * 2f) * 0.015f;
-            modeloVisualDoctor.localPosition = posicionBaseModelo + new Vector3(0f, respiracion, 0f);
-            modeloVisualDoctor.localRotation = Quaternion.Euler(0f, modeloVisualDoctor.localEulerAngles.y, 0f);
-        }
+        Vector3 velocidad = rb.linearVelocity;
+        velocidad.y = 0f;
+        animador.SetFloat("Velocidad", velocidad.magnitude);
+        animador.SetBool("EnSuelo", enElSuelo);
     }
 
     private void ProcesarEntradaPausa()
@@ -371,11 +339,22 @@ public class PlayerController : MonoBehaviour
         rb.linearVelocity = velocidad + Vector3.up * 2f;
     }
 
+    /// <summary>Descuenta lo entregado a un paciente y ajusta lo que falta conseguir.</summary>
+    public void GastarSuministros(int jeringas, int equipajes)
+    {
+        jeringasRecolectadas -= jeringas;
+        equipajesRecolectados -= equipajes;
+        jeringasMeta -= jeringas;
+        equipajesMeta -= equipajes;
+        ActualizarHUD();
+    }
+
     /// <summary>Frena al personaje; se usa al abrir menús porque el Rigidbody conserva su velocidad.</summary>
     public void Detener()
     {
         if (rb == null) rb = GetComponent<Rigidbody>();
         rb.linearVelocity = Vector3.zero;
+        if (animador != null) animador.SetFloat("Velocidad", 0f);
     }
 
     /// <summary>Recibe las bonificaciones de los objetos equipados.</summary>

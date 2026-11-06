@@ -1,21 +1,23 @@
 using System.Collections.Generic;
 using Unity.AI.Navigation;
 using UnityEditor;
-using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.AI;
 
 /// <summary>
-/// Da vida al Hub con modelos de Kenney (CC0, en Assets/Externos/Kenney):
-/// parques, calle con tráfico, fuente, pájaros y residentes con animación.
+/// Da vida al Hub: cielo, césped, paseos, parques, calle con tráfico, fuente, pájaros,
+/// puesto de mando y residentes. Los recursos externos están en Assets/Externos (CC0).
 /// </summary>
 public static partial class MontajeRescate
 {
     private const string KENNEY = "Assets/Externos/Kenney/";
-    private const string RUTA_CONTROLADOR = DIR + "/Residente.controller";
-    private const float ALTURA_KENNEY = 3.95f;
-    private const float ALTURA_RESIDENTE = 1.72f;
+    private const string POLY = "Assets/Externos/PolyHaven/";
     private const float CALLE = 41.5f;
+
+    private static readonly string[] Nombres =
+    {
+        "Ana", "Luis", "Marta", "Diego", "Rosa", "Pablo", "Elena", "Hugo", "Sara", "Tomás", "Inés", "Raúl", "Lucía", "Mario"
+    };
 
     private static readonly string[] Consejos =
     {
@@ -28,61 +30,6 @@ public static partial class MontajeRescate
         "Después de un sismo, aléjate de muros dañados.",
         "Dormir bien también cuida tu salud."
     };
-
-    /// <summary>Prepara las animaciones de Kenney para que se repitan y crea su controlador.</summary>
-    private static void ConfigurarPersonajesKenney()
-    {
-        AnimationClip reposo = ClipEnBucle(KENNEY + "Personajes/idle.fbx", "Idle");
-        AnimationClip correr = ClipEnBucle(KENNEY + "Personajes/run.fbx", "Run");
-
-        AssetDatabase.DeleteAsset(RUTA_CONTROLADOR);
-        AnimatorController controlador = AnimatorController.CreateAnimatorControllerAtPath(RUTA_CONTROLADOR);
-        controlador.AddParameter("Velocidad", AnimatorControllerParameterType.Float);
-
-        AnimatorStateMachine maquina = controlador.layers[0].stateMachine;
-        AnimatorState estadoReposo = maquina.AddState("Reposo");
-        estadoReposo.motion = reposo;
-        AnimatorState estadoCaminar = maquina.AddState("Caminar");
-        estadoCaminar.motion = correr;
-        estadoCaminar.speed = 0.7f;
-        maquina.defaultState = estadoReposo;
-
-        AnimatorStateTransition ida = estadoReposo.AddTransition(estadoCaminar);
-        ida.hasExitTime = false;
-        ida.duration = 0.15f;
-        ida.AddCondition(AnimatorConditionMode.Greater, 0.25f, "Velocidad");
-
-        AnimatorStateTransition vuelta = estadoCaminar.AddTransition(estadoReposo);
-        vuelta.hasExitTime = false;
-        vuelta.duration = 0.15f;
-        vuelta.AddCondition(AnimatorConditionMode.Less, 0.25f, "Velocidad");
-    }
-
-    private static AnimationClip ClipEnBucle(string ruta, string nombre)
-    {
-        ModelImporter importador = (ModelImporter)AssetImporter.GetAtPath(ruta);
-        if (importador.clipAnimations.Length != 1)
-        {
-            foreach (ModelImporterClipAnimation clip in importador.defaultClipAnimations)
-            {
-                if (!clip.name.EndsWith(nombre)) continue;
-
-                clip.name = nombre;
-                clip.loopTime = true;
-                importador.clipAnimations = new[] { clip };
-                importador.SaveAndReimport();
-                break;
-            }
-        }
-
-        foreach (Object recurso in AssetDatabase.LoadAllAssetsAtPath(ruta))
-        {
-            if (recurso is AnimationClip animacion && animacion.name == nombre) return animacion;
-        }
-
-        Debug.LogError("[Montaje] No se encontró la animación " + nombre);
-        return null;
-    }
 
     private static void ConstruirVidaHub(GameObject jugador)
     {
@@ -97,6 +44,7 @@ public static partial class MontajeRescate
         ConstruirParque(plantas, 1f, 29);
         ConstruirFuente(raiz);
         ConstruirEntornoCalle(calle);
+        Transform mando = ConstruirPuestoMando(raiz);
 
         raiz.gameObject.AddComponent<AmbienteHub>();
 
@@ -105,22 +53,23 @@ public static partial class MontajeRescate
 
         ConstruirTrafico(calle);
         ConstruirResidentes(personas);
+        ConstruirEquipoMando(mando);
         ConstruirPajaros(raiz);
     }
 
     private static void ConstruirSuelosHub(Transform raiz)
     {
-        Material cesped = Mat("Cesped", new Color(0.36f, 0.56f, 0.27f), 0.05f);
-        Material acera = Mat("Acera", new Color(0.66f, 0.64f, 0.6f), 0.1f);
         Material asfalto = Mat("AsfaltoHub", new Color(0.2f, 0.2f, 0.22f), 0.15f);
         Material linea = Mat("LineaCalle", new Color(0.92f, 0.9f, 0.8f), 0.2f);
 
-        SueloPlano(raiz, "ParqueOeste", new Vector3(-27f, 0.02f, 0f), 18f, 68f, cesped);
-        SueloPlano(raiz, "ParqueEste", new Vector3(27f, 0.02f, 0f), 18f, 68f, cesped);
-
-        // Plaza redonda de la fuente.
-        GameObject plaza = Primitiva(PrimitiveType.Cylinder, raiz, "Plaza", new Vector3(0f, 0.015f, -22f), new Vector3(24f, 0.01f, 24f), acera);
-        plaza.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        // Paseos de adoquín, con repetición continua aunque se crucen.
+        Mesh paseos = MallaPaseos();
+        GameObject suelo = new GameObject("Paseos");
+        suelo.transform.SetParent(raiz, false);
+        suelo.AddComponent<MeshFilter>().sharedMesh = paseos;
+        MeshRenderer dibujo = suelo.AddComponent<MeshRenderer>();
+        dibujo.sharedMaterial = MatTextura("PaseoHub", "herringbone_pavement_03", Color.white, 1f);
+        dibujo.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
         // Calle que rodea todo el Hub.
         SueloPlano(raiz, "CalleSur", new Vector3(0f, 0.03f, -CALLE), 90f, 7f, asfalto);
@@ -135,6 +84,157 @@ public static partial class MontajeRescate
             SueloPlano(raiz, "Linea", new Vector3(-CALLE, 0.04f, d), 0.25f, 3f, linea);
             SueloPlano(raiz, "Linea", new Vector3(CALLE, 0.04f, d), 0.25f, 3f, linea);
         }
+    }
+
+    /// <summary>Crea un material con textura y relieve de Poly Haven.</summary>
+    private static Material MatTextura(string nombre, string textura, Color tinte, float repetir)
+    {
+        string relieve = POLY + textura + "_nor_gl_1k.jpg";
+        TextureImporter importador = (TextureImporter)AssetImporter.GetAtPath(relieve);
+        if (importador.textureType != TextureImporterType.NormalMap)
+        {
+            importador.textureType = TextureImporterType.NormalMap;
+            importador.SaveAndReimport();
+        }
+
+        Material material = Mat(nombre, tinte, 0.12f);
+        material.SetTexture("_BaseMap", Cargar<Texture2D>(POLY + textura + "_diff_1k.jpg"));
+        material.SetTexture("_BumpMap", Cargar<Texture2D>(relieve));
+        material.SetTextureScale("_BaseMap", Vector2.one * repetir);
+        material.EnableKeyword("_NORMALMAP");
+        EditorUtility.SetDirty(material);
+        return material;
+    }
+
+    private static Mesh MallaPaseos()
+    {
+        List<Vector3> vertices = new List<Vector3>();
+        List<int> triangulos = new List<int>();
+
+        void Rectangulo(float x0, float z0, float x1, float z1)
+        {
+            int i = vertices.Count;
+            vertices.Add(new Vector3(x0, 0.02f, z0));
+            vertices.Add(new Vector3(x0, 0.02f, z1));
+            vertices.Add(new Vector3(x1, 0.02f, z1));
+            vertices.Add(new Vector3(x1, 0.02f, z0));
+            triangulos.AddRange(new[] { i, i + 1, i + 2, i, i + 2, i + 3 });
+        }
+
+        Rectangulo(-3.5f, -14f, 3.5f, 0f);    // del Hub a la plaza
+        Rectangulo(-20f, -3f, 16f, 14f);      // explanada de la tienda y el puesto de mando
+        Rectangulo(-24f, -24f, 24f, -20f);    // cruce hacia los parques
+
+        const int LADOS = 64;
+        const float RADIO = 13f;
+        int centro = vertices.Count;
+        vertices.Add(new Vector3(0f, 0.021f, -22f));
+        for (int i = 0; i < LADOS; i++)
+        {
+            float angulo = i * Mathf.PI * 2f / LADOS;
+            vertices.Add(new Vector3(Mathf.Cos(angulo) * RADIO, 0.021f, -22f + Mathf.Sin(angulo) * RADIO));
+            triangulos.AddRange(new[] { centro, centro + 1 + (i + 1) % LADOS, centro + 1 + i });
+        }
+
+        Vector2[] uv = new Vector2[vertices.Count];
+        for (int i = 0; i < uv.Length; i++) uv[i] = new Vector2(vertices[i].x, vertices[i].z) / 3.5f;
+
+        string ruta = DIR + "/MallaPaseos.asset";
+        AssetDatabase.DeleteAsset(ruta);
+        Mesh malla = new Mesh { name = "Paseos" };
+        malla.SetVertices(vertices);
+        malla.SetTriangles(triangulos, 0);
+        malla.uv = uv;
+        malla.RecalculateNormals();
+        malla.RecalculateTangents();
+        malla.RecalculateBounds();
+        AssetDatabase.CreateAsset(malla, ruta);
+        return malla;
+    }
+
+    private static float EscalaPara(string ruta, float alto)
+    {
+        GameObject prueba = Object.Instantiate(Cargar<GameObject>(ruta));
+        float escala = alto / MedirCaja(prueba).size.y;
+        Object.DestroyImmediate(prueba);
+        return escala;
+    }
+
+    /// <summary>Carpa de coordinación junto al médico de misiones, con mesa, mapa y suministros.</summary>
+    private static Transform ConstruirPuestoMando(Transform raiz)
+    {
+        Transform puesto = Grupo(raiz, "PuestoMando");
+        puesto.position = new Vector3(10.5f, 0f, 4.5f);
+        puesto.rotation = Quaternion.Euler(0f, -25f, 0f);
+
+        Vector3 Mundo(float x, float y, float z) => puesto.TransformPoint(new Vector3(x, y, z));
+        float giro = puesto.eulerAngles.y;
+
+        Material lona = Mat("LonaAzul", new Color(0.16f, 0.35f, 0.6f), 0.2f);
+        Material madera = Mat("Madera", new Color(0.42f, 0.28f, 0.16f), 0.2f);
+        Material tablero = Mat("TableroMapa", Color.white, 0.2f);
+        Texture2D mapa = AssetDatabase.LoadAssetAtPath<Texture2D>(DIR + "/MapaNivel1.png");
+        if (mapa != null) tablero.SetTexture("_BaseMap", mapa);
+
+        GameObject carpa = Carpa(puesto, Vector3.zero, 0f, 7.5f, 5.5f, lona, true);
+        carpa.transform.localPosition = Vector3.zero;
+        carpa.transform.localRotation = Quaternion.identity;
+
+        // Mesa de operaciones con el mapa de la zona.
+        Primitiva(PrimitiveType.Cube, puesto, "Mesa", new Vector3(0f, 0.78f, 0.5f), new Vector3(3f, 0.08f, 1.3f), madera, null, true);
+        foreach (Vector3 pata in new[] { new Vector3(-1.4f, 0.37f, -0.05f), new Vector3(1.4f, 0.37f, -0.05f), new Vector3(-1.4f, 0.37f, 1.05f), new Vector3(1.4f, 0.37f, 1.05f) })
+        {
+            Primitiva(PrimitiveType.Cube, puesto, "Pata", pata, new Vector3(0.08f, 0.74f, 0.08f), madera, null, true);
+        }
+        Primitiva(PrimitiveType.Cube, puesto, "MapaMesa", new Vector3(-0.3f, 0.825f, 0.5f), new Vector3(0.7f, 0.01f, 1.15f), tablero);
+
+        // Tablero al fondo.
+        Primitiva(PrimitiveType.Cube, puesto, "Tablero", new Vector3(0f, 1.45f, 2.5f), new Vector3(1.05f, 2f, 0.06f), tablero, null, true);
+        Primitiva(PrimitiveType.Cube, puesto, "MarcoTablero", new Vector3(0f, 1.45f, 2.54f), new Vector3(1.2f, 2.15f, 0.04f), madera);
+
+        Poner(OBJETOS + "HealthKit.prefab", puesto, Mundo(1f, 0.83f, 0.5f), giro + 20f, 0.9f, false);
+        Poner(OBJETOS + "TV.prefab", puesto, Mundo(-2.6f, 0.82f, 1.8f), giro + 160f, EscalaPara(OBJETOS + "TV.prefab", 0.55f), false);
+        Primitiva(PrimitiveType.Cube, puesto, "MesaRadio", new Vector3(-2.6f, 0.4f, 1.8f), new Vector3(1f, 0.8f, 0.7f), madera, null, true);
+
+        Caja(puesto, Mundo(2.9f, 0f, 1.9f), giro + 10f, 1.5f);
+        Caja(puesto, Mundo(2.9f, 0.72f, 1.9f), giro - 12f, 1.3f);
+        Caja(puesto, Mundo(3.1f, 0f, 0.5f), giro + 80f, 1.4f);
+
+        // Herido atendido fuera de la carpa.
+        GameObject camilla = Camilla(puesto, Mundo(-5.2f, 0f, 0.5f), giro + 90f);
+        BoxCollider solido = camilla.AddComponent<BoxCollider>();
+        solido.center = Vector3.up * 0.45f;
+        solido.size = new Vector3(0.9f, 0.9f, 2.2f);
+
+        Letrero(puesto, "LetreroMando", "PUESTO DE MANDO", Mundo(0f, 4.6f, -2.8f), 3.6f, Color.white);
+        return puesto;
+    }
+
+    private static void ConstruirEquipoMando(Transform puesto)
+    {
+        string[] frasesEquipo =
+        {
+            "Revisamos la zona afectada. Habla con el médico jefe para salir.",
+            "Si ves a un herido, primero asegúrate de que la zona sea segura.",
+            "El triage ayuda a atender primero a quien está más grave.",
+            "No muevas a un herido si no es necesario."
+        };
+
+        Vector3 Mundo(float x, float z) => puesto.TransformPoint(new Vector3(x, 0f, z));
+        float giro = puesto.eulerAngles.y;
+
+        NPCResidente Equipo(string id, string nombre, Material piel, Vector3 pos, float mirar, bool atendiendo = false)
+        {
+            NPCResidente persona = CrearResidente(puesto, id, nombre, piel, pos, giro + mirar, null, false);
+            persona.trabajando = atendiendo;
+            persona.frases = frasesEquipo;
+            return persona;
+        }
+
+        Equipo("Paramedico1", "Paramédico Javier", PielParamedico, Mundo(-0.6f, -0.45f), 0f);
+        Equipo("Paramedico2", "Paramédica Noelia", PielParamedico, Mundo(0.9f, 1.6f), 180f);
+        Equipo("Operador", "Operadora Vera", PielEnfermera, Mundo(-2.6f, 1f), 0f);
+        Equipo("Enfermera", "Enfermero Iván", PielEnfermera, Mundo(-5.2f, -0.8f), 0f, true);
     }
 
     private static void SueloPlano(Transform padre, string nombre, Vector3 pos, float ancho, float largo, Material material)
@@ -288,7 +388,16 @@ public static partial class MontajeRescate
 
     private static void ConstruirEntornoCalle(Transform raiz)
     {
-        // Barrio alrededor, detrás de los muros, para que el Hub no parezca una isla.
+        // Setos sobre los límites para no ver un muro liso.
+        for (float d = -47f; d <= 47f; d += 6f)
+        {
+            Poner(CIUDAD + "hedge_with_base.prefab", raiz, new Vector3(d, 0f, 49f), 0f, 1f, false);
+            Poner(CIUDAD + "hedge_with_base.prefab", raiz, new Vector3(d, 0f, -49f), 0f, 1f, false);
+            Poner(CIUDAD + "hedge_with_base.prefab", raiz, new Vector3(49f, 0f, d), 90f, 1f, false);
+            Poner(CIUDAD + "hedge_with_base.prefab", raiz, new Vector3(-49f, 0f, d), 90f, 1f, false);
+        }
+
+        // Barrio alrededor, para que el Hub no parezca una isla.
         Poner(CIUDAD + "office_building_2.prefab", raiz, new Vector3(-30f, 0f, 76f), 180f, 1f, false);
         Poner(CIUDAD + "office_building_3.prefab", raiz, new Vector3(28f, 0f, 80f), 180f, 1f, false);
         Poner(CIUDAD + "office_building_1.prefab", raiz, new Vector3(82f, 0f, 0f), -90f, 1f, false);
@@ -412,85 +521,57 @@ public static partial class MontajeRescate
             puntos[i] = punto.transform;
         }
 
-        string[] pieles = { "survivorFemaleA", "skaterMaleA", "survivorMaleB", "skaterFemaleA" };
-
         for (int i = 0; i < 9; i++)
         {
             Vector3 inicio = lugares[(i * 3 + 1) % lugares.Length];
-            CrearResidente(raiz, "Residente" + (i + 1), pieles[i % pieles.Length], inicio, i * 40f, puntos, true);
+            CrearResidente(raiz, "Residente" + (i + 1), Nombres[i], PielVecino(i), inicio, i * 40f, puntos, true);
         }
 
         // Grupos que charlan quietos.
-        CrearResidente(raiz, "Charla1", "skaterMaleA", new Vector3(-7f, 0f, -12f), 90f, null, false);
-        CrearResidente(raiz, "Charla2", "survivorFemaleA", new Vector3(-5.6f, 0f, -12f), -90f, null, false);
-        CrearResidente(raiz, "Charla3", "survivorMaleB", new Vector3(13.5f, 0f, -6f), 200f, null, false);
-        CrearResidente(raiz, "Charla4", "skaterFemaleA", new Vector3(13f, 0f, -7.6f), 20f, null, false);
-        CrearResidente(raiz, "Banca1", "survivorMaleB", new Vector3(-17.3f, 0f, 0f), 90f, null, false);
+        CrearResidente(raiz, "Charla1", Nombres[9], PielVecino(1), new Vector3(-7f, 0f, -12f), 90f, null, false);
+        CrearResidente(raiz, "Charla2", Nombres[10], PielVecino(2), new Vector3(-5.6f, 0f, -12f), -90f, null, false);
+        CrearResidente(raiz, "Charla3", Nombres[11], PielVecino(4), new Vector3(13.5f, 0f, -6f), 200f, null, false);
+        CrearResidente(raiz, "Charla4", Nombres[12], PielVecino(5), new Vector3(13f, 0f, -7.6f), 20f, null, false);
+        CrearResidente(raiz, "Paseante", Nombres[13], PielVecino(0), new Vector3(-17.3f, 0f, 3f), 90f, null, false);
     }
 
-    private static void CrearResidente(Transform padre, string nombre, string piel, Vector3 pos, float giroY, Transform[] puntos, bool pasea)
+    private static NPCResidente CrearResidente(Transform padre, string id, string nombre, Material piel, Vector3 pos, float giroY, Transform[] puntos, bool pasea)
     {
-        GameObject raiz = new GameObject(nombre);
+        GameObject raiz = new GameObject(id);
         raiz.transform.SetParent(padre, false);
         raiz.transform.position = pos;
         raiz.transform.rotation = Quaternion.Euler(0f, giroY, 0f);
 
         NavMeshAgent agente = raiz.AddComponent<NavMeshAgent>();
         agente.radius = 0.35f;
-        agente.height = ALTURA_RESIDENTE;
-        agente.speed = 1.9f;
+        agente.height = 1.8f;
+        agente.speed = 2.2f;
         agente.angularSpeed = 240f;
         agente.acceleration = 6f;
         agente.stoppingDistance = 0.2f;
-        agente.avoidancePriority = 40 + Mathf.Abs(nombre.GetHashCode()) % 40;
+        agente.avoidancePriority = 40 + Mathf.Abs(id.GetHashCode()) % 40;
 
         CapsuleCollider colision = raiz.AddComponent<CapsuleCollider>();
-        colision.center = Vector3.up * 0.86f;
-        colision.height = ALTURA_RESIDENTE;
+        colision.center = Vector3.up * 0.9f;
+        colision.height = 1.8f;
         colision.radius = 0.32f;
 
-        GameObject modelo = (GameObject)PrefabUtility.InstantiatePrefab(Cargar<GameObject>(KENNEY + "Personajes/characterMedium.fbx"), raiz.transform);
-        modelo.name = "Modelo";
-        modelo.transform.localPosition = Vector3.zero;
-        modelo.transform.localRotation = Quaternion.identity;
-        modelo.transform.localScale = Vector3.one * (ALTURA_RESIDENTE / ALTURA_KENNEY);
+        GameObject modelo = CrearPersonaje(raiz.transform, "Modelo", piel, 0f);
 
-        Material material = MatPiel(piel);
-        foreach (SkinnedMeshRenderer parte in modelo.GetComponentsInChildren<SkinnedMeshRenderer>(true))
-        {
-            parte.sharedMaterial = material;
-        }
-
-        // Las animaciones de Kenney parten del nodo Root, no de la raíz del archivo.
-        Animator raizModelo = modelo.GetComponent<Animator>();
-        if (raizModelo != null) raizModelo.enabled = false;
-
-        Animator animador = modelo.transform.Find("Root").gameObject.AddComponent<Animator>();
-        animador.runtimeAnimatorController = Cargar<RuntimeAnimatorController>(RUTA_CONTROLADOR);
-        animador.applyRootMotion = false;
-
-        GameObject globo = new GameObject("Globo");
-        globo.transform.SetParent(raiz.transform, false);
-        globo.transform.localPosition = Vector3.up * 2.2f;
-        TMPro.TextMeshPro texto = CrearTextoMundo(globo, "", 1.5f, Color.white);
-        texto.fontStyle = TMPro.FontStyles.Normal;
-        texto.rectTransform.sizeDelta = new Vector2(3.4f, 1.2f);
-        globo.AddComponent<Billboard>();
+        GameObject marca = new GameObject("MarcaCharla");
+        marca.transform.SetParent(raiz.transform, false);
+        marca.transform.localPosition = Vector3.up * 2.2f;
+        TMPro.TextMeshPro puntos3 = CrearTextoMundo(marca, "...", 5f, ColOro);
+        marca.AddComponent<Billboard>();
 
         NPCResidente residente = raiz.AddComponent<NPCResidente>();
+        residente.nombre = nombre;
         residente.puntos = puntos;
         residente.pasea = pasea;
-        residente.animador = animador;
-        residente.globo = texto;
+        residente.animador = modelo.GetComponent<Animator>();
+        residente.marcaCharla = puntos3;
         residente.frases = Consejos;
-    }
-
-    private static Material MatPiel(string piel)
-    {
-        Material material = Mat("Piel_" + piel, Color.white, 0.15f);
-        material.SetTexture("_BaseMap", Cargar<Texture2D>(KENNEY + "Personajes/Skins/" + piel + ".png"));
-        EditorUtility.SetDirty(material);
-        return material;
+        return residente;
     }
 
     private static void ConstruirPajaros(Transform raiz)

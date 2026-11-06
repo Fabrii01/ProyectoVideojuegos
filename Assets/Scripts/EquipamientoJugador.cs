@@ -10,12 +10,17 @@ public class EquipamientoJugador : MonoBehaviour
 {
     public CatalogoTienda catalogo;
 
+    /// <summary>Objetos que el nivel pone siempre, como el casco espacial.</summary>
+    public ObjetoTienda[] objetosFijos;
+
     private readonly List<GameObject> instancias = new List<GameObject>();
     private PlayerController jugador;
+    private AtaqueJugador ataque;
 
     private void Awake()
     {
         jugador = GetComponent<PlayerController>();
+        ataque = GetComponent<AtaqueJugador>();
     }
 
     private void OnEnable()
@@ -39,6 +44,7 @@ public class EquipamientoJugador : MonoBehaviour
 
         int vidaExtra = 0;
         float velocidadExtra = 0f;
+        int danioArma = 0;
 
         if (catalogo != null)
         {
@@ -48,12 +54,37 @@ public class EquipamientoJugador : MonoBehaviour
 
                 vidaExtra += objeto.vidaExtra;
                 velocidadExtra += objeto.velocidadExtra;
+                danioArma = Mathf.Max(danioArma, objeto.danioArma);
+                if (PuntoOcupado(objeto.punto)) continue;
+
                 GameObject instancia = Colocar(jugador.modeloVisualDoctor != null ? jugador.modeloVisualDoctor : transform, objeto);
                 if (instancia != null) instancias.Add(instancia);
             }
         }
 
+        if (objetosFijos != null)
+        {
+            foreach (ObjetoTienda fijo in objetosFijos)
+            {
+                GameObject instancia = Colocar(jugador.modeloVisualDoctor, fijo);
+                if (instancia != null) instancias.Add(instancia);
+            }
+        }
+
         jugador.AplicarBonos(vidaExtra, velocidadExtra);
+        if (ataque != null) ataque.Danio = danioArma;
+    }
+
+    /// <summary>Un objeto fijo del nivel tapa al comprado, pero este conserva sus bonos.</summary>
+    private bool PuntoOcupado(PuntoEquipo punto)
+    {
+        if (objetosFijos == null) return false;
+
+        foreach (ObjetoTienda fijo in objetosFijos)
+        {
+            if (fijo != null && fijo.punto == punto) return true;
+        }
+        return false;
     }
 
     /// <summary>Crea el objeto y lo ata al hueso que le corresponde en el modelo.</summary>
@@ -70,24 +101,24 @@ public class EquipamientoJugador : MonoBehaviour
             colision.enabled = false;
         }
 
-        // Se ubica en el espacio del personaje y luego se ata al hueso para que lo siga.
-        instancia.transform.rotation = modelo.rotation * Quaternion.Euler(objeto.rotacion);
-        instancia.transform.position = hueso.position + modelo.rotation * objeto.posicion;
+        // La posición y el giro se guardan relativos al hueso para seguir sus animaciones.
+        instancia.transform.rotation = hueso.rotation * Quaternion.Euler(objeto.rotacion);
+        instancia.transform.position = hueso.position + hueso.rotation * objeto.posicion;
         instancia.transform.localScale = instancia.transform.localScale * objeto.escala;
         instancia.transform.SetParent(hueso, true);
         return instancia;
     }
 
-    private static string NombreHueso(PuntoEquipo punto)
+    public static string NombreHueso(PuntoEquipo punto)
     {
         switch (punto)
         {
-            case PuntoEquipo.Cabeza: return "Bip001 Head";
-            case PuntoEquipo.Pecho: return "Bip001 Spine1";
-            case PuntoEquipo.Espalda: return "Bip001 Spine1";
-            case PuntoEquipo.Cintura: return "Bip001 Pelvis";
-            case PuntoEquipo.ManoDerecha: return "Bip001 R Hand";
-            default: return "Bip001 L Hand";
+            case PuntoEquipo.Cabeza: return "Head";
+            case PuntoEquipo.Pecho: return "Spine2";
+            case PuntoEquipo.Espalda: return "Spine2";
+            case PuntoEquipo.Cintura: return "Hips";
+            case PuntoEquipo.ManoDerecha: return "RightHand";
+            default: return "LeftHand";
         }
     }
 

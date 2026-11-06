@@ -12,7 +12,7 @@ public enum PuntoEquipo
 
 /// <summary>
 /// Un objeto que se vende en la tienda del Hub y se coloca sobre el modelo del protagonista.
-/// Posición y rotación se miden respecto al personaje: +Z es su frente y +Y es arriba.
+/// Posición y rotación son relativas al hueso; las calcula el montaje desde la postura de reposo.
 /// </summary>
 [CreateAssetMenu(fileName = "ObjetoTienda", menuName = "Rescate/Objeto de tienda")]
 public class ObjetoTienda : ScriptableObject
@@ -34,4 +34,5 @@ public class ObjetoTienda : ScriptableObject
     [Header("Bonificaciones")]
     public int vidaExtra;
     public float velocidadExtra;
+    public int danioArma;
 }

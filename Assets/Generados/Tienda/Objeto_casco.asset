@@ -19,8 +19,9 @@ MonoBehaviour:
   colorIcono: {r: 0.98, g: 0.72, b: 0.08, a: 1}
   prefabVisual: {fileID: 5244144411932061932, guid: 07e1c31e057cb34409429c7f00978dd6, type: 3}
   punto: 0
-  posicion: {x: 0, y: 0.19, z: 0.03}
-  rotacion: {x: 0, y: 0, z: 0}
-  escala: 0.9
+  posicion: {x: -0.013325173, y: 0.20447306, z: -0.050131883}
+  rotacion: {x: 340.83026, y: 359.0738, z: 3.8591368}
+  escala: 1.15
   vidaExtra: 25
   velocidadExtra: 0
+  danioArma: 0

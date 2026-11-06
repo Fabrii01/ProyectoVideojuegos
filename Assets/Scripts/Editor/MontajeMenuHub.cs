@@ -56,6 +56,7 @@ public static partial class MontajeRescate
 
         SaludGameBuilder.CrearPanelAjustes(canvas.transform, control);
         ConstruirInstrucciones(canvas.transform, control);
+        MusicaDeEscena("MusicaMenu.ogg", null);
 
         EditorUtility.SetDirty(control);
         EditorSceneManager.MarkSceneDirty(escena);
@@ -77,7 +78,7 @@ public static partial class MontajeRescate
 
         GameObject rescatista = new GameObject("Rescatista");
         rescatista.transform.SetParent(raiz, false);
-        GameObject modeloRescatista = CrearPersonaje(rescatista.transform, "Modelo", CuerpoDoctor, CabezaDoctor, 0f);
+        GameObject modeloRescatista = CrearPersonaje(rescatista.transform, "Modelo", PielRescatista, 0f);
         rescatista.transform.position = new Vector3(1.9f, 0f, 0.4f);
         rescatista.transform.rotation = Quaternion.Euler(0f, 205f, 0f);
         foreach (string id in new[] { "casco", "mochila" })
@@ -112,14 +113,15 @@ public static partial class MontajeRescate
             "Habla con el médico del Hub y elige una misión.\n\n" +
             "Busca <b>jeringas</b> y <b>equipajes de salud</b> y llévalos al paciente.\n\n" +
             "Junta <b>monedas</b> por el mapa y gástalas en la tienda del Hub.\n\n" +
-            "Evita el fuego y a los <b>saqueadores</b>: si te ven, te persiguen. Escóndete detrás de los escombros.";
+            "Evita el fuego y a los <b>saqueadores</b>: si te ven, te persiguen. Escóndete o defiéndete con un arma de la tienda.";
 
         string controles =
             "<b><color=#F28019>CONTROLES</color></b>\n\n" +
-            "<b>W A S D</b>   Moverse\n\n" +
+            "<b>W A S D</b>   Caminar\n\n" +
             "<b>Shift</b>   Correr\n\n" +
             "<b>Espacio</b>   Saltar\n\n" +
-            "<b>Ratón</b>   Mover la cámara\n\n" +
+            "<b>Ratón</b>   Cámara\n\n" +
+            "<b>Clic izquierdo o F</b>   Atacar (con arma)\n\n" +
             "<b>E</b>   Hablar\n\n" +
             "<b>Esc</b>   Pausa";
 
@@ -161,16 +163,15 @@ public static partial class MontajeRescate
         AjustarEdificioHospital();
 
         GameObject medico = GameObject.Find("NPC_Medico");
-        NPCMedicoInteractivo npcMisiones = PrepararNPC(medico, new Vector3(5f, 0f, 3f), 200f, CuerpoDoctor, CabezaDoctor, jugador);
+        NPCMedicoInteractivo npcMisiones = PrepararNPC(medico, new Vector3(4.2f, 0f, 3f), 200f, PielMedico, jugador);
 
         GameObject vendedor = new GameObject("NPC_Tienda");
-        NPCMedicoInteractivo npcTienda = PrepararNPC(vendedor, new Vector3(-9f, 0f, 3.2f), 150f,
-            MatCuerpo("TenderoCuerpo", new Color(0.62f, 0.85f, 0.7f)), CabezaDoctor, jugador);
+        NPCMedicoInteractivo npcTienda = PrepararNPC(vendedor, new Vector3(-9f, 0f, 3.2f), 150f, PielTendero, jugador);
 
         ConstruirPuestoTienda();
 
         Transform letreros = new GameObject("LetrerosHub").transform;
-        Letrero(letreros, "LetreroMisiones", "MISIONES", new Vector3(5f, 2.55f, 3f), 5f, ColNaranja);
+        Letrero(letreros, "LetreroMisiones", "MISIONES", new Vector3(4.2f, 2.5f, 3f), 5f, ColNaranja);
         Letrero(letreros, "LetreroTienda", "TIENDA", new Vector3(-9f, 3.9f, 3.2f), 5f, ColOro);
 
         ConstruirVidaHub(jugadorGO);
@@ -186,6 +187,9 @@ public static partial class MontajeRescate
 
         PanelPausa(canvas.transform, jugador, "VOLVER AL MENÚ", gestor.CargarMenuPrincipal);
 
+        ConstruirDialogo(canvas.transform);
+        MusicaDeEscena("MusicaHub.mp3", null);
+
         // Al final para que quede por encima de los paneles abiertos.
         ChipMonedas(canvas.transform, new Vector2(1f, 1f), new Vector2(-32f, -30f));
 
@@ -196,18 +200,43 @@ public static partial class MontajeRescate
 
     private static void AmbienteHub(Camera camara)
     {
+        Material cielo = AssetDatabase.LoadAssetAtPath<Material>(DIR_MAT + "/CieloHub.mat");
+        if (cielo == null)
+        {
+            cielo = new Material(Shader.Find("Skybox/Panoramic"));
+            AssetDatabase.CreateAsset(cielo, DIR_MAT + "/CieloHub.mat");
+        }
+        cielo.SetTexture("_MainTex", Cargar<Texture>(POLY + "kloofendal_48d_partly_cloudy_puresky_2k.hdr"));
+        cielo.SetFloat("_Exposure", 1f);
+        EditorUtility.SetDirty(cielo);
+
+        RenderSettings.skybox = cielo;
+        RenderSettings.fog = true;
+        RenderSettings.fogMode = FogMode.Linear;
+        RenderSettings.fogColor = new Color(0.74f, 0.82f, 0.92f);
+        RenderSettings.fogStartDistance = 80f;
+        RenderSettings.fogEndDistance = 340f;
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
+        RenderSettings.ambientSkyColor = new Color(0.66f, 0.76f, 0.9f);
+        RenderSettings.ambientEquatorColor = new Color(0.6f, 0.62f, 0.58f);
+        RenderSettings.ambientGroundColor = new Color(0.3f, 0.3f, 0.24f);
+
+        camara.clearFlags = CameraClearFlags.Skybox;
+        camara.farClipPlane = 800f;
+
         Light sol = BuscarSol();
-        AmbienteDesastre(camara, sol, new Color(0.7f, 0.74f, 0.76f), 0.004f, 1.6f);
-        sol.color = new Color(1f, 0.93f, 0.82f);
-        RenderSettings.ambientLight = new Color(0.55f, 0.57f, 0.6f);
+        sol.color = new Color(1f, 0.95f, 0.86f);
+        sol.intensity = 1.7f;
+        sol.shadows = LightShadows.Soft;
+        sol.transform.rotation = Quaternion.Euler(48f, -38f, 0f);
 
         GameObject suelo = GameObject.Find("SueloHub");
-        suelo.GetComponent<Renderer>().sharedMaterial = MatSuelo();
+        suelo.transform.localScale = new Vector3(40f, 1f, 40f);
+        suelo.GetComponent<Renderer>().sharedMaterial = MatTextura("CespedHub", "leafy_grass", new Color(0.82f, 0.92f, 0.72f), 110f);
 
-        Material muro = Mat("Concreto", new Color(0.46f, 0.45f, 0.43f), 0.1f);
         foreach (string nombre in new[] { "LimiteNorte", "LimiteSur", "LimiteEste", "LimiteOeste" })
         {
-            GameObject.Find(nombre).GetComponent<Renderer>().sharedMaterial = muro;
+            GameObject.Find(nombre).GetComponent<Renderer>().enabled = false;
         }
     }
 
@@ -234,16 +263,17 @@ public static partial class MontajeRescate
         }
     }
 
-    private static NPCMedicoInteractivo PrepararNPC(GameObject npc, Vector3 pos, float giroY, Material cuerpo, Material cabeza, PlayerController jugador)
+    private static NPCMedicoInteractivo PrepararNPC(GameObject npc, Vector3 pos, float giroY, Material piel, PlayerController jugador)
     {
-        Transform viejo = npc.transform.Find("Doctor");
-        if (viejo != null) Object.DestroyImmediate(viejo.gameObject);
-        Transform modelo = npc.transform.Find("Modelo");
-        if (modelo != null) Object.DestroyImmediate(modelo.gameObject);
+        foreach (string viejo in new[] { "Doctor", "Modelo" })
+        {
+            Transform hijo = npc.transform.Find(viejo);
+            if (hijo != null) Object.DestroyImmediate(hijo.gameObject);
+        }
 
         npc.transform.position = pos;
         npc.transform.rotation = Quaternion.Euler(0f, giroY, 0f);
-        CrearPersonaje(npc.transform, "Modelo", cuerpo, cabeza, 0f);
+        CrearPersonaje(npc.transform, "Modelo", piel, 0f);
 
         foreach (Collider anterior in npc.GetComponents<Collider>()) Object.DestroyImmediate(anterior);
 
@@ -291,9 +321,35 @@ public static partial class MontajeRescate
         Caja(raiz, Mundo(1.7f, 0.72f, -1.1f), giro + 30f, 1.2f);
     }
 
+    private static void ConstruirDialogo(Transform canvas)
+    {
+        RectTransform raiz = NuevoRect(canvas, "Dialogo", new Vector2(0.5f, 0f), Vector2.zero, Vector2.zero);
+        DialogoUI dialogo = raiz.gameObject.AddComponent<DialogoUI>();
+
+        GameObject panel = PanelUI(raiz, "Panel", new Vector2(0.5f, 0f), new Vector2(0f, 36f), new Vector2(1180f, 170f), new Color(0.05f, 0.07f, 0.1f, 0.96f));
+        panel.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 0f);
+        panel.GetComponent<Image>().raycastTarget = false;
+
+        GameObject franja = PanelUI(panel.transform, "Franja", new Vector2(0f, 0.5f), new Vector2(0f, 0f), new Vector2(10f, 170f), ColNaranja);
+        franja.GetComponent<Image>().raycastTarget = false;
+
+        dialogo.panel = panel;
+        dialogo.textoNombre = TextoUI(panel.transform, "Nombre", "Nombre", 28f, new Vector2(0f, 1f), new Vector2(40f, -18f), new Vector2(1000f, 36f), TextAlignmentOptions.Left, ColNaranja, true);
+        dialogo.textoFrase = TextoUI(panel.transform, "Frase", "", 34f, new Vector2(0f, 1f), new Vector2(40f, -60f), new Vector2(1100f, 96f), TextAlignmentOptions.TopLeft, Color.white);
+    }
+
+    private static void MusicaDeEscena(string principal, string combate)
+    {
+        BorrarRaiz("Musica");
+
+        MusicaEscena musica = new GameObject("Musica").AddComponent<MusicaEscena>();
+        musica.temaPrincipal = Cargar<AudioClip>("Assets/Externos/Musica/" + principal);
+        if (combate != null) musica.temaCombate = Cargar<AudioClip>("Assets/Externos/Musica/" + combate);
+    }
+
     private static GameObject Aviso(Transform canvas, string nombre, string texto)
     {
-        GameObject aviso = PanelUI(canvas, nombre, new Vector2(0.5f, 0f), new Vector2(0f, 120f), new Vector2(560f, 66f), new Color(0.06f, 0.08f, 0.11f, 0.9f));
+        GameObject aviso = PanelUI(canvas, nombre, new Vector2(0.5f, 0f), new Vector2(0f, 230f), new Vector2(560f, 66f), new Color(0.06f, 0.08f, 0.11f, 0.9f));
         aviso.GetComponent<Image>().raycastTarget = false;
         TextoUI(aviso.transform, "Texto", texto, 27f, Centro, Vector2.zero, new Vector2(540f, 60f), TextAlignmentOptions.Center, Color.white, true);
         aviso.SetActive(false);
@@ -308,42 +364,46 @@ public static partial class MontajeRescate
         TextoUI(tarjeta.transform, "Antetitulo", "CENTRAL DE EMERGENCIAS", 22f, new Vector2(0f, 1f), new Vector2(60f, -38f), new Vector2(800f, 32f), TextAlignmentOptions.Left, ColNaranja, true).characterSpacing = 5f;
         TextoUI(tarjeta.transform, "Titulo", "Elige tu misión", 52f, new Vector2(0f, 1f), new Vector2(58f, -70f), new Vector2(900f, 70f), TextAlignmentOptions.Left, Color.white, true);
 
-        TarjetaMision(tarjeta.transform, "Mision1", -440f, "MISIÓN 1", "Terremoto en el centro",
-            "Una réplica destruyó la avenida principal. Hay un herido grave en el puesto de triage.",
-            "Media", "Suministros, 30 monedas", new Color(0.88f, 0.42f, 0.1f), gestor, true);
-        TarjetaMision(tarjeta.transform, "Mision2", 0f, "MISIÓN 2", "Inundación en el río",
-            "Disponible en una próxima actualización.", "-", "-", new Color(0.2f, 0.42f, 0.62f), null, false);
-        TarjetaMision(tarjeta.transform, "Mision3", 440f, "MISIÓN 3", "Incendio forestal",
-            "Disponible en una próxima actualización.", "-", "-", new Color(0.55f, 0.22f, 0.16f), null, false);
+        TarjetaMision(tarjeta.transform, 1, -440f, "Terremoto en el centro",
+            "Una réplica destruyó la ciudad. Hay dos heridos atrapados entre los escombros.",
+            "Media", "60 monedas", new Color(0.88f, 0.42f, 0.1f), gestor);
+        TarjetaMision(tarjeta.transform, 2, 0f, "Incendio en la reserva",
+            "El fuego avanza por el bosque. Cruza el río y rescata a los campistas.",
+            "Alta", "90 monedas", new Color(0.72f, 0.2f, 0.12f), gestor);
+        TarjetaMision(tarjeta.transform, 3, 440f, "Emergencia en la base Selene",
+            "Meteoritos sobre la base lunar. Tres heridos con gravedad baja y androides averiados.",
+            "Muy alta", "150 monedas", new Color(0.24f, 0.3f, 0.62f), gestor);
 
         BotonUI(tarjeta.transform, "BtnVolver", "VOLVER", 22f, new Vector2(0.5f, 0f), new Vector2(0f, 30f), new Vector2(280f, 60f), ColGris, npc.CerrarMenu);
         velo.SetActive(false);
         return velo;
     }
 
-    private static void TarjetaMision(Transform padre, string nombre, float x, string numero, string titulo, string texto, string dificultad, string recompensa, Color color, GestorNiveles gestor, bool abierta)
+    private static void TarjetaMision(Transform padre, int numero, float x, string titulo, string texto, string dificultad, string recompensa, Color color, GestorNiveles gestor)
     {
-        GameObject tarjeta = PanelUI(padre, nombre, Centro, new Vector2(x, -22f), new Vector2(420f, 500f), abierta ? ColTarjeta : new Color(0.1f, 0.12f, 0.15f));
+        GameObject tarjeta = PanelUI(padre, "Mision" + numero, Centro, new Vector2(x, -22f), new Vector2(420f, 500f), ColTarjeta);
 
-        GameObject banda = PanelUI(tarjeta.transform, "Banda", new Vector2(0.5f, 1f), Vector2.zero, new Vector2(420f, 130f), abierta ? color : Color.Lerp(color, ColFondo, 0.65f));
+        GameObject banda = PanelUI(tarjeta.transform, "Banda", new Vector2(0.5f, 1f), Vector2.zero, new Vector2(420f, 130f), color);
         banda.GetComponent<Image>().raycastTarget = false;
-        TextoUI(banda.transform, "Numero", numero, 20f, new Vector2(0f, 1f), new Vector2(26f, -20f), new Vector2(360f, 28f), TextAlignmentOptions.Left, new Color(1f, 1f, 1f, 0.85f), true).characterSpacing = 4f;
-        TextoUI(banda.transform, "Titulo", titulo, 30f, new Vector2(0f, 0f), new Vector2(26f, 18f), new Vector2(370f, 76f), TextAlignmentOptions.BottomLeft, Color.white, true);
+        TextoUI(banda.transform, "Numero", "MISIÓN " + numero, 20f, new Vector2(0f, 1f), new Vector2(26f, -20f), new Vector2(200f, 28f), TextAlignmentOptions.Left, new Color(1f, 1f, 1f, 0.85f), true).characterSpacing = 4f;
+        TextMeshProUGUI estado = TextoUI(banda.transform, "Estado", "", 18f, new Vector2(1f, 1f), new Vector2(-22f, -20f), new Vector2(170f, 28f), TextAlignmentOptions.Right, Color.white, true);
+        TextoUI(banda.transform, "Titulo", titulo, 30f, new Vector2(0f, 0f), new Vector2(26f, 14f), new Vector2(370f, 76f), TextAlignmentOptions.BottomLeft, Color.white, true);
 
-        Color suave = abierta ? ColTextoSuave : new Color(0.5f, 0.54f, 0.6f);
-        TextoUI(tarjeta.transform, "Descripcion", texto, 22f, new Vector2(0f, 1f), new Vector2(26f, -150f), new Vector2(368f, 130f), TextAlignmentOptions.TopLeft, suave);
+        TextoUI(tarjeta.transform, "Descripcion", texto, 22f, new Vector2(0f, 1f), new Vector2(26f, -150f), new Vector2(368f, 130f), TextAlignmentOptions.TopLeft, ColTextoSuave);
+        TextoUI(tarjeta.transform, "Datos", "<b>Dificultad:</b> " + dificultad + "\n<b>Recompensa:</b> " + recompensa, 21f, new Vector2(0f, 0f), new Vector2(26f, 112f), new Vector2(368f, 76f), TextAlignmentOptions.BottomLeft, ColTextoSuave);
 
-        if (abierta)
-        {
-            TextoUI(tarjeta.transform, "Datos", "<b>Dificultad:</b> " + dificultad + "\n<b>Recompensa:</b> " + recompensa, 21f, new Vector2(0f, 0f), new Vector2(26f, 112f), new Vector2(368f, 76f), TextAlignmentOptions.BottomLeft, suave);
-            BotonUI(tarjeta.transform, "BtnNivel1", "INICIAR", 24f, new Vector2(0.5f, 0f), new Vector2(0f, 26f), new Vector2(368f, 68f), ColNaranja, gestor.CargarNivel1);
-        }
-        else
-        {
-            GameObject bloqueo = PanelUI(tarjeta.transform, "Bloqueado", new Vector2(0.5f, 0f), new Vector2(0f, 26f), new Vector2(368f, 68f), new Color(0.16f, 0.18f, 0.22f));
-            bloqueo.GetComponent<Image>().raycastTarget = false;
-            TextoUI(bloqueo.transform, "Texto", "PRÓXIMAMENTE", 22f, Centro, Vector2.zero, new Vector2(360f, 60f), TextAlignmentOptions.Center, new Color(0.55f, 0.59f, 0.65f), true).characterSpacing = 3f;
-        }
+        Button boton = BotonUI(tarjeta.transform, "BtnNivel" + numero, "INICIAR", 24f, new Vector2(0.5f, 0f), new Vector2(0f, 26f), new Vector2(368f, 68f), ColNaranja, null);
+        UnityEventTools.AddStringPersistentListener(boton.onClick, gestor.CargarEscena, "Nivel" + numero);
+
+        GameObject bloqueo = PanelUI(tarjeta.transform, "Bloqueado", new Vector2(0.5f, 0f), new Vector2(0f, 26f), new Vector2(368f, 68f), new Color(0.16f, 0.18f, 0.22f));
+        bloqueo.GetComponent<Image>().raycastTarget = false;
+        TextoUI(bloqueo.transform, "Texto", "COMPLETA LA ANTERIOR", 20f, Centro, Vector2.zero, new Vector2(360f, 60f), TextAlignmentOptions.Center, new Color(0.6f, 0.64f, 0.7f), true).characterSpacing = 2f;
+
+        TarjetaNivel control = tarjeta.AddComponent<TarjetaNivel>();
+        control.numeroNivel = numero;
+        control.botonIniciar = boton.gameObject;
+        control.bloqueo = bloqueo;
+        control.textoEstado = estado;
     }
 
     private static GameObject ConstruirPanelTienda(Transform canvas, NPCMedicoInteractivo npc)
@@ -356,7 +416,7 @@ public static partial class MontajeRescate
 
         RectTransform lista = NuevoRect(panel.transform, "Lista", new Vector2(0.5f, 1f), new Vector2(0f, -136f), new Vector2(800f, 720f));
         VerticalLayoutGroup columnas = lista.gameObject.AddComponent<VerticalLayoutGroup>();
-        columnas.spacing = 12f;
+        columnas.spacing = 8f;
         columnas.childControlHeight = false;
         columnas.childControlWidth = false;
         columnas.childForceExpandHeight = false;
@@ -380,18 +440,18 @@ public static partial class MontajeRescate
 
     private static FilaTienda ConstruirFila(Transform lista)
     {
-        GameObject fila = PanelUI(lista, "PlantillaFila", new Vector2(0.5f, 1f), Vector2.zero, new Vector2(800f, 110f), ColTarjeta);
+        GameObject fila = PanelUI(lista, "PlantillaFila", new Vector2(0.5f, 1f), Vector2.zero, new Vector2(800f, 96f), ColTarjeta);
         FilaTienda datos = fila.AddComponent<FilaTienda>();
 
-        GameObject icono = PanelUI(fila.transform, "Icono", new Vector2(0f, 0.5f), new Vector2(16f, 0f), new Vector2(78f, 78f), Color.white);
+        GameObject icono = PanelUI(fila.transform, "Icono", new Vector2(0f, 0.5f), new Vector2(14f, 0f), new Vector2(68f, 68f), Color.white);
         datos.icono = icono.GetComponent<Image>();
         datos.textoIcono = TextoUI(icono.transform, "Letra", "A", 38f, Centro, Vector2.zero, new Vector2(70f, 70f), TextAlignmentOptions.Center, Color.white, true);
 
-        datos.textoNombre = TextoUI(fila.transform, "Nombre", "Nombre", 25f, new Vector2(0f, 1f), new Vector2(112f, -12f), new Vector2(430f, 32f), TextAlignmentOptions.Left, Color.white, true);
-        datos.textoDescripcion = TextoUI(fila.transform, "Descripcion", "Descripción", 19f, new Vector2(0f, 1f), new Vector2(112f, -44f), new Vector2(450f, 28f), TextAlignmentOptions.Left, ColTextoSuave);
-        datos.textoPrecio = TextoUI(fila.transform, "Precio", "0 monedas", 20f, new Vector2(0f, 0f), new Vector2(112f, 10f), new Vector2(300f, 28f), TextAlignmentOptions.Left, ColOro, true);
+        datos.textoNombre = TextoUI(fila.transform, "Nombre", "Nombre", 25f, new Vector2(0f, 1f), new Vector2(100f, -8f), new Vector2(450f, 30f), TextAlignmentOptions.Left, Color.white, true);
+        datos.textoDescripcion = TextoUI(fila.transform, "Descripcion", "Descripción", 19f, new Vector2(0f, 1f), new Vector2(100f, -38f), new Vector2(490f, 26f), TextAlignmentOptions.Left, ColTextoSuave);
+        datos.textoPrecio = TextoUI(fila.transform, "Precio", "0 monedas", 20f, new Vector2(0f, 0f), new Vector2(100f, 6f), new Vector2(300f, 26f), TextAlignmentOptions.Left, ColOro, true);
 
-        Button boton = BotonUI(fila.transform, "Boton", "COMPRAR", 19f, new Vector2(1f, 0.5f), new Vector2(-16f, 0f), new Vector2(182f, 62f), Color.white, null);
+        Button boton = BotonUI(fila.transform, "Boton", "COMPRAR", 19f, new Vector2(1f, 0.5f), new Vector2(-14f, 0f), new Vector2(176f, 58f), Color.white, null);
         datos.boton = boton;
         datos.fondoBoton = boton.GetComponent<Image>();
         datos.textoBoton = boton.GetComponentInChildren<TextMeshProUGUI>();

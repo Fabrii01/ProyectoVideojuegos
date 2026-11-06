@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: CatalogoTienda
   m_EditorClassIdentifier: Assembly-CSharp::CatalogoTienda
   objetos:
+  - {fileID: 11400000, guid: d73c4c68d489e724296fc745141aef7c, type: 2}
   - {fileID: 11400000, guid: 02ef88de3c73e6e428c5523652a4d322, type: 2}
   - {fileID: 11400000, guid: 518313aa5551a2c4a961e42196c3e700, type: 2}
   - {fileID: 11400000, guid: 6a28d88394ad5454498838d52afa8581, type: 2}

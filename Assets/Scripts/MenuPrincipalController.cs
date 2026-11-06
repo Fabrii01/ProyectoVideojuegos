@@ -21,11 +21,6 @@ public class MenuPrincipalController : MonoBehaviour
         // Desbloquear cursor para navegación de menú
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
-
-        if (AudioManager.Instancia != null)
-        {
-            AudioManager.Instancia.IniciarMusicaAmbiente();
-        }
     }
 
     public void Jugar()

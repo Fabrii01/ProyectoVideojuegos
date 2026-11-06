@@ -56,10 +56,9 @@ public class CameraController : MonoBehaviour
         if (Cursor.lockState == CursorLockMode.Locked)
         {
             float sensibilidad = (AjustesManager.Instancia != null) ? AjustesManager.Instancia.SensibilidadRaton : 3.0f;
-            bool invertirY = (AjustesManager.Instancia != null) && AjustesManager.Instancia.InvertirEjeY;
 
             float mouseX = Input.GetAxis("Mouse X") * sensibilidad;
-            float mouseY = Input.GetAxis("Mouse Y") * sensibilidad * (invertirY ? 1f : -1f);
+            float mouseY = -Input.GetAxis("Mouse Y") * sensibilidad;
 
             rotacionY += mouseX;
             rotacionX = Mathf.Clamp(rotacionX + mouseY, pitchMin, pitchMax);
