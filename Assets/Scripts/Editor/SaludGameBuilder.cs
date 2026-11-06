@@ -128,16 +128,18 @@ public static class SaludGameBuilder
         rtAj.sizeDelta = Vector2.zero;
 
         Image imgAj = panelAjustes.AddComponent<Image>();
-        imgAj.color = new Color(0.06f, 0.08f, 0.11f, 0.98f);
-        imgAj.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+        imgAj.color = new Color(0.07f, 0.075f, 0.085f, 0.98f);
+        imgAj.sprite = MontajeRescate.SpritePanel;
         imgAj.type = Image.Type.Sliced;
-        imgAj.pixelsPerUnitMultiplier = 0.45f;
+        imgAj.pixelsPerUnitMultiplier = 1f;
+
+        MontajeRescate.Cinta(panelAjustes.transform, 768f);
 
         PanelAjustesUI uiAjustes = panelAjustes.AddComponent<PanelAjustesUI>();
         uiAjustes.panelAjustes = panelAjustes;
         controller.panelAjustes = panelAjustes;
 
-        CrearTextoUI(panelAjustes.transform, "TituloAjustes", "AJUSTES", 42, new Vector2(0.5f, 0.9f), new Vector2(600, 56), TextAlignmentOptions.Center, Color.white).GetComponent<TextMeshProUGUI>().fontStyle = FontStyles.Bold;
+        CrearTextoUI(panelAjustes.transform, "TituloAjustes", "AJUSTES", 42, new Vector2(0.5f, 0.9f), new Vector2(600, 56), TextAlignmentOptions.Center, Color.white).GetComponent<TextMeshProUGUI>().font = MontajeRescate.FuenteTitulo;
 
         CrearTextoUI(panelAjustes.transform, "HeaderAudio", "AUDIO", 24, new Vector2(0.5f, 0.78f), new Vector2(300, 35), TextAlignmentOptions.Center, Color.white);
         uiAjustes.sliderMaster = CrearSliderConEtiqueta(panelAjustes.transform, "SliderMaster", "Volumen general", 0.8f, new Vector2(0.5f, 0.69f), out uiAjustes.textoMaster);
@@ -147,10 +149,11 @@ public static class SaludGameBuilder
         CrearTextoUI(panelAjustes.transform, "HeaderControles", "CONTROLES", 24, new Vector2(0.5f, 0.36f), new Vector2(300, 35), TextAlignmentOptions.Center, Color.white);
         uiAjustes.sliderSensibilidad = CrearSliderConEtiqueta(panelAjustes.transform, "SliderSensibilidad", "Sensibilidad del ratón", 3.0f, new Vector2(0.5f, 0.27f), out uiAjustes.textoSensibilidad, 0.5f, 10f);
 
-        GameObject btnRestablecer = CrearBotonUI(panelAjustes.transform, "BtnRestablecer", "Restablecer valores", 20, new Vector2(0.3f, 0.1f), new Vector2(240, 52), new Color(0.25f, 0.29f, 0.35f));
+        GameObject btnRestablecer = CrearBotonUI(panelAjustes.transform, "BtnRestablecer", "Restablecer valores", 20, new Vector2(0.3f, 0.1f), new Vector2(240, 56), new Color(0.24f, 0.25f, 0.28f));
         uiAjustes.botonRestablecer = btnRestablecer.GetComponent<Button>();
 
-        GameObject btnCerrar = CrearBotonUI(panelAjustes.transform, "BtnCerrar", "Guardar y volver", 22, new Vector2(0.7f, 0.1f), new Vector2(240, 52), new Color(0.95f, 0.5f, 0.1f));
+        GameObject btnCerrar = CrearBotonUI(panelAjustes.transform, "BtnCerrar", "Guardar y volver", 22, new Vector2(0.7f, 0.1f), new Vector2(240, 56), new Color(1f, 0.74f, 0.04f));
+        btnCerrar.GetComponentInChildren<TextMeshProUGUI>().color = new Color(0.07f, 0.07f, 0.08f);
         uiAjustes.botonCerrar = btnCerrar.GetComponent<Button>();
         UnityEditor.Events.UnityEventTools.AddPersistentListener(btnCerrar.GetComponent<Button>().onClick, controller.CerrarAjustes);
 
@@ -176,8 +179,7 @@ public static class SaludGameBuilder
         tmp.color = color;
         tmp.raycastTarget = false;
 
-        TMP_FontAsset font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset");
-        if (font != null) tmp.font = font;
+        tmp.font = MontajeRescate.FuenteTexto;
 
         return go;
     }
@@ -194,6 +196,8 @@ public static class SaludGameBuilder
 
         Image img = go.AddComponent<Image>();
         img.color = colorFondo;
+        img.sprite = MontajeRescate.SpritePanel;
+        img.type = Image.Type.Sliced;
 
         Button btn = go.AddComponent<Button>();
         btn.targetGraphic = img;
@@ -217,8 +221,7 @@ public static class SaludGameBuilder
         tmp.color = Color.white;
         tmp.raycastTarget = false;
 
-        TMP_FontAsset font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset");
-        if (font != null) tmp.font = font;
+        tmp.font = MontajeRescate.FuenteTexto;
 
         return go;
     }
@@ -257,7 +260,7 @@ public static class SaludGameBuilder
         rtBg.anchorMax = Vector2.one;
         rtBg.sizeDelta = Vector2.zero;
         Image bgImg = bgGO.AddComponent<Image>();
-        bgImg.color = new Color(0.2f, 0.25f, 0.35f);
+        bgImg.color = new Color(0.22f, 0.23f, 0.26f);
 
         GameObject fillArea = new GameObject("Fill Area");
         fillArea.transform.SetParent(sliderGO.transform, false);
@@ -271,7 +274,7 @@ public static class SaludGameBuilder
         RectTransform rtFill = fill.AddComponent<RectTransform>();
         rtFill.sizeDelta = Vector2.zero;
         Image fillImg = fill.AddComponent<Image>();
-        fillImg.color = new Color(0.2f, 0.75f, 1f);
+        fillImg.color = new Color(1f, 0.74f, 0.04f);
 
         slider.fillRect = rtFill;
 

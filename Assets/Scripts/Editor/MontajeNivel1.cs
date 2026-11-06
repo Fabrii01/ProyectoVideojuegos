@@ -109,6 +109,10 @@ public static partial class MontajeRescate
         Linea(g.monedas, new Vector3(-12f, 0f, 47f), new Vector3(20f, 0f, 47f), 6);
         Arco(g.monedas, new Vector3(0f, 0f, -26f), new Vector3(0f, 0f, -22f), 3, 1.8f);
 
+        CajaEmergencia(g.obstaculos, new Vector3(-14f, 0f, -50f), 10f);
+        CajaEmergencia(g.obstaculos, new Vector3(50f, 0f, 18f), 95f);
+        CajaEmergencia(g.obstaculos, new Vector3(-6f, 0f, 50f), 200f);
+
         // Heridos en los lotes derrumbados del norte.
         CrearPaciente(g.nivel, new Vector3(-34f, 0f, 36f), 40f, 2, 1, PielVecino(3), "asma");
         CrearPaciente(g.nivel, new Vector3(36f, 0f, 36f), -30f, 2, 1, PielVecino(1), "tetano");

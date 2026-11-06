@@ -24,9 +24,9 @@ public class PreguntasUI : MonoBehaviour
     public TextMeshProUGUI textoSiguiente;
 
     [Header("Colores")]
-    public Color colorNormal = new Color(0.25f, 0.29f, 0.35f);
-    public Color colorCorrecto = new Color(0.13f, 0.6f, 0.45f);
-    public Color colorIncorrecto = new Color(0.72f, 0.2f, 0.18f);
+    public Color colorNormal = new Color(0.24f, 0.25f, 0.28f);
+    public Color colorCorrecto = new Color(0.1f, 0.62f, 0.44f);
+    public Color colorIncorrecto = new Color(0.82f, 0.17f, 0.12f);
 
     private readonly List<PreguntaSalud> preguntas = new List<PreguntaSalud>();
     private int[] orden;

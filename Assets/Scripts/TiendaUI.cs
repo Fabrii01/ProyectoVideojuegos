@@ -14,10 +14,10 @@ public class TiendaUI : MonoBehaviour
     public TextMeshProUGUI textoMensaje;
 
     [Header("Colores del botón")]
-    public Color colorComprar = new Color(0.95f, 0.62f, 0.12f);
-    public Color colorEquipar = new Color(0.13f, 0.55f, 0.42f);
-    public Color colorQuitar = new Color(0.32f, 0.37f, 0.45f);
-    public Color colorBloqueado = new Color(0.2f, 0.23f, 0.28f);
+    public Color colorComprar = new Color(1f, 0.74f, 0.04f);
+    public Color colorEquipar = new Color(0.1f, 0.62f, 0.44f);
+    public Color colorQuitar = new Color(0.3f, 0.31f, 0.34f);
+    public Color colorBloqueado = new Color(0.2f, 0.2f, 0.22f);
 
     private readonly Dictionary<ObjetoTienda, FilaTienda> filas = new Dictionary<ObjetoTienda, FilaTienda>();
 
@@ -75,6 +75,7 @@ public class TiendaUI : MonoBehaviour
 
         fila.textoPrecio.text = comprado ? "Comprado" : objeto.precio + " monedas";
         fila.boton.interactable = comprado || alcanza;
+        fila.textoBoton.color = !comprado && alcanza ? new Color(0.07f, 0.07f, 0.08f) : Color.white;
 
         if (!comprado)
         {

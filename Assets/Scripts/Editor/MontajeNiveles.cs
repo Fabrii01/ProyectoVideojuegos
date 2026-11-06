@@ -75,6 +75,7 @@ public static partial class MontajeRescate
     }
 
     private const int MAPA_PIXELES = 768;
+    private const float ESCALA_SUMINISTRO = 2.4f;
 
     private static void MontarNiveles()
     {
@@ -310,9 +311,11 @@ public static partial class MontajeRescate
         const string EQUIPAJE = "Assets/Prefabs/Recolectables/EquipajeSaludRecolectable.prefab";
         const string BOTIQUIN = "Assets/Prefabs/Recolectables/BotiquinRecolectable.prefab";
 
-        for (int i = 0; i < jeringas.Length; i++) Poner(JERINGA, raiz, jeringas[i], 0f, 1f, false).name = "Jeringa_" + (i + 1);
-        for (int i = 0; i < equipajes.Length; i++) Poner(EQUIPAJE, raiz, equipajes[i], 0f, 1f, false).name = "Equipaje_" + (i + 1);
-        for (int i = 0; i < botiquines.Length; i++) Poner(BOTIQUIN, raiz, botiquines[i], 0f, 1f, false).name = "Botiquin_" + (i + 1);
+        // Grandes y a media altura para verlos de lejos.
+        Vector3 alto = Vector3.up * 0.4f;
+        for (int i = 0; i < jeringas.Length; i++) Poner(JERINGA, raiz, jeringas[i] + alto, 0f, ESCALA_SUMINISTRO, false).name = "Jeringa_" + (i + 1);
+        for (int i = 0; i < equipajes.Length; i++) Poner(EQUIPAJE, raiz, equipajes[i] + alto, 0f, ESCALA_SUMINISTRO, false).name = "Equipaje_" + (i + 1);
+        for (int i = 0; i < botiquines.Length; i++) Poner(BOTIQUIN, raiz, botiquines[i] + alto, 0f, ESCALA_SUMINISTRO, false).name = "Botiquin_" + (i + 1);
     }
 
     private static void Linea(Transform raiz, Vector3 desde, Vector3 hasta, int cantidad)
@@ -320,7 +323,7 @@ public static partial class MontajeRescate
         for (int i = 0; i < cantidad; i++)
         {
             float t = cantidad == 1 ? 0.5f : i / (float)(cantidad - 1);
-            Poner(RUTA_MONEDA, raiz, Vector3.Lerp(desde, hasta, t) + Vector3.up * 0.9f, 0f, 1f, false);
+            Poner(RUTA_MONEDA, raiz, Vector3.Lerp(desde, hasta, t) + Vector3.up * 0.9f, 0f, 1.4f, false);
         }
     }
 
@@ -330,8 +333,42 @@ public static partial class MontajeRescate
         {
             float t = i / (float)(cantidad - 1);
             Vector3 punto = Vector3.Lerp(desde, hasta, t) + Vector3.up * (0.9f + Mathf.Sin(t * Mathf.PI) * altura);
-            Poner(RUTA_MONEDA, raiz, punto, 0f, 1f, false);
+            Poner(RUTA_MONEDA, raiz, punto, 0f, 1.4f, false);
         }
+    }
+
+    /// <summary>Caja que solo se abre con la palanca de rescate.</summary>
+    private static void CajaEmergencia(Transform padre, Vector3 pos, float giro)
+    {
+        GameObject caja = Caja(padre, pos, giro, 2.3f);
+        caja.name = "CajaEmergencia";
+
+        GameObject sellos = new GameObject("Sellos");
+        sellos.transform.SetParent(caja.transform, false);
+        Material rojo = Mat("SelloRojo", new Color(0.8f, 0.1f, 0.08f), 0.3f, 0f, new Color(0.5f, 0.04f, 0.02f));
+        foreach (float x in new[] { -0.35f, 0.35f })
+        {
+            Primitiva(PrimitiveType.Cube, sellos.transform, "Sello", new Vector3(x, 0.24f, 0f), new Vector3(0.09f, 0.5f, 0.8f), rojo);
+        }
+
+        GameObject luzGO = new GameObject("Luz");
+        luzGO.transform.SetParent(caja.transform, false);
+        luzGO.transform.localPosition = Vector3.up * 1.2f;
+        Light luz = luzGO.AddComponent<Light>();
+        luz.type = LightType.Point;
+        luz.color = new Color(1f, 0.25f, 0.2f);
+        luz.range = 5f;
+        luz.intensity = 3f;
+
+        SphereCollider zona = caja.AddComponent<SphereCollider>();
+        zona.isTrigger = true;
+        zona.radius = 2.6f / 2.3f;
+
+        CajaSellada sellada = caja.AddComponent<CajaSellada>();
+        sellada.sellos = sellos;
+        sellada.luz = luz;
+        sellada.botiquin = Cargar<GameObject>("Assets/Prefabs/Recolectables/BotiquinRecolectable.prefab");
+        EditorUtility.SetDirty(sellada);
     }
 
     private static Paciente CrearPaciente(Transform nivel, Vector3 pos, float giro, int jeringas, int equipajes, Material piel, string enfermedad)
@@ -420,7 +457,7 @@ public static partial class MontajeRescate
         imagen.raycastTarget = false;
         imagen.sprite = SpriteRedondeado;
         imagen.type = Image.Type.Sliced;
-        imagen.pixelsPerUnitMultiplier = 0.45f;
+        imagen.pixelsPerUnitMultiplier = 1f;
         RectTransform rtRelleno = (RectTransform)relleno.transform;
         rtRelleno.sizeDelta = Vector2.zero;
 
@@ -437,6 +474,7 @@ public static partial class MontajeRescate
     {
         GameObject velo = Velo(canvas, "PanelVictoria", new Color(0.02f, 0.03f, 0.05f, 0.75f));
         GameObject tarjeta = PanelUI(velo.transform, "Tarjeta", Centro, Vector2.zero, new Vector2(920f, 580f), ColFondo);
+        Cinta(tarjeta.transform, 920f);
 
         TextoUI(tarjeta.transform, "Antetitulo", "MISIÓN CUMPLIDA", 24f, new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(800f, 34f), TextAlignmentOptions.Center, ColVerde, true).characterSpacing = 6f;
         TextoUI(tarjeta.transform, "Titulo", "Todos a salvo", 54f, new Vector2(0.5f, 1f), new Vector2(0f, -78f), new Vector2(820f, 74f), TextAlignmentOptions.Center, Color.white, true);
@@ -522,7 +560,7 @@ public static partial class MontajeRescate
     {
         const float LADO = 240f;
 
-        GameObject panel = PanelUI(canvas, "Mapa", new Vector2(1f, 1f), new Vector2(-30f, -28f), new Vector2(LADO + 16f, LADO + 74f), new Color(0.06f, 0.08f, 0.11f, 0.9f));
+        GameObject panel = PanelUI(canvas, "Mapa", new Vector2(1f, 1f), new Vector2(-30f, -28f), new Vector2(LADO + 16f, LADO + 94f), new Color(0.06f, 0.08f, 0.11f, 0.9f));
         panel.GetComponent<Image>().raycastTarget = false;
 
         RectTransform area = NuevoRect(panel.transform, "Area", new Vector2(0.5f, 1f), new Vector2(0f, -8f), new Vector2(LADO, LADO));
@@ -545,24 +583,28 @@ public static partial class MontajeRescate
         Leyenda(panel.transform, 2, "Equipaje", minimapa.colorEquipaje);
         Leyenda(panel.transform, 3, "Botiquín", minimapa.colorBotiquin);
         Leyenda(panel.transform, 4, "Moneda", minimapa.colorMoneda);
+        minimapa.leyendaPaciente = Leyenda(panel.transform, 5, "Paciente", Color.white);
+        minimapa.leyendaCaja = Leyenda(panel.transform, 6, "Caja", minimapa.colorCaja);
 
         // Debajo de los paneles de pausa y victoria.
         panel.transform.SetSiblingIndex(1);
         EditorUtility.SetDirty(minimapa);
     }
 
-    private static void Leyenda(Transform panel, int indice, string texto, Color color)
+    private static GameObject Leyenda(Transform panel, int indice, string texto, Color color)
     {
         float x = 12f + (indice % 2) * 118f;
-        float y = 12f + (2 - indice / 2) * 19f;
+        float y = 10f + (3 - indice / 2) * 19f;
 
-        RectTransform punto = NuevoRect(panel, "Punto" + texto, Vector2.zero, new Vector2(x, y + 3f), new Vector2(10f, 10f));
+        RectTransform grupo = NuevoRect(panel, "Leyenda" + texto, Vector2.zero, Vector2.zero, Vector2.zero);
+        RectTransform punto = NuevoRect(grupo, "Punto" + texto, Vector2.zero, new Vector2(x, y + 3f), new Vector2(10f, 10f));
         Image imagen = punto.gameObject.AddComponent<Image>();
         imagen.sprite = SpriteCirculo;
         imagen.color = color;
         imagen.raycastTarget = false;
 
-        TextoUI(panel, "Texto" + texto, texto, 14f, Vector2.zero, new Vector2(x + 14f, y - 1f), new Vector2(96f, 18f), TextAlignmentOptions.MidlineLeft, ColTextoSuave);
+        TextoUI(grupo, "Texto" + texto, texto, 15f, Vector2.zero, new Vector2(x + 14f, y - 1f), new Vector2(96f, 18f), TextAlignmentOptions.MidlineLeft, ColTextoSuave);
+        return grupo.gameObject;
     }
 
     private static void CrearEnemigo(Transform raiz, string prefab, string nombre, Vector3[] puntos)

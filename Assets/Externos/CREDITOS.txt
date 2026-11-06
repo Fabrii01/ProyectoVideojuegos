@@ -1,4 +1,5 @@
-Recursos externos usados en el proyecto. Todos se usan bajo CC0 (dominio público).
+Recursos externos usados en el proyecto. Se usan bajo CC0 (dominio público),
+salvo las tipografías, que usan la licencia SIL Open Font License (OFL).
 
 Kenney (kenney.nl)
   Car Kit, Nature Kit, Space Kit, Survival Kit, City Kit (Commercial)
@@ -9,6 +10,9 @@ Quaternius (opengameart.org/content/animated-human-low-poly)
 Poly Haven (polyhaven.com)
   Cielos: Kloofendal 48d Partly Cloudy, Belfast Sunset, Industrial Sunset (Pure Sky)
   Suelos: Leafy Grass, Herringbone Pavement 03, Cracked Concrete, Forest Floor, Moon 01
+
+Tipografías (Google Fonts, licencia OFL incluida en Assets/Externos/Fuentes)
+  Saira Stencil One, Barlow y Barlow Condensed
 
 Música (opengameart.org)
   Menú: "Tragic ambient main menu" (publicada con licencia doble; se usa la opción CC0)

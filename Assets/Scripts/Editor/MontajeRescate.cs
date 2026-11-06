@@ -28,14 +28,14 @@ public static partial class MontajeRescate
     private const string RUTA_FURTIVO = DIR_PREFAB + "/Furtivo.prefab";
     private const string RUTA_ANDROIDE = DIR_PREFAB + "/Androide.prefab";
 
-    private static readonly Color ColFondo = new Color(0.06f, 0.08f, 0.11f, 0.96f);
-    private static readonly Color ColTarjeta = new Color(0.12f, 0.15f, 0.2f, 1f);
-    private static readonly Color ColNaranja = new Color(0.95f, 0.5f, 0.1f);
-    private static readonly Color ColVerde = new Color(0.13f, 0.6f, 0.45f);
-    private static readonly Color ColGris = new Color(0.25f, 0.29f, 0.35f);
-    private static readonly Color ColRojo = new Color(0.72f, 0.2f, 0.18f);
+    private static readonly Color ColFondo = new Color(0.07f, 0.075f, 0.085f, 0.97f);
+    private static readonly Color ColTarjeta = new Color(0.14f, 0.145f, 0.16f, 1f);
+    private static readonly Color ColNaranja = new Color(1f, 0.74f, 0.04f);
+    private static readonly Color ColVerde = new Color(0.1f, 0.62f, 0.44f);
+    private static readonly Color ColGris = new Color(0.24f, 0.25f, 0.28f);
+    private static readonly Color ColRojo = new Color(0.82f, 0.17f, 0.12f);
     private static readonly Color ColOro = new Color(1f, 0.8f, 0.25f);
-    private static readonly Color ColTextoSuave = new Color(0.72f, 0.77f, 0.83f);
+    private static readonly Color ColTextoSuave = new Color(0.86f, 0.83f, 0.76f);
 
     [MenuItem("SaludGame/★ Montar juego completo")]
     public static void MontarTodo()
@@ -88,7 +88,8 @@ public static partial class MontajeRescate
     {
         pielesCreadas.Clear();
 
-        foreach (string carpeta in new[] { DIR, DIR_MAT, DIR_PREFAB, DIR_TIENDA })
+        CrearEstilo();
+        foreach (string carpeta in new[] { DIR, DIR_MAT, DIR_PREFAB, DIR_TIENDA, DIR_UI })
         {
             Directory.CreateDirectory(carpeta);
         }
@@ -658,11 +659,11 @@ public static partial class MontajeRescate
             new Color(0.3f, 0.65f, 0.95f), Cargar<GameObject>(DIR_TIENDA + "/LinternaPecho.prefab"), PuntoEquipo.Pecho,
             new Vector3(0.09f, -0.02f, 0.14f), Vector3.zero, 0.55f, 0, 0f));
 
-        catalogo.objetos.Add(CrearObjeto("palanca", "Palanca de rescate", "Sirve para abrir paso entre los escombros.", 50,
+        catalogo.objetos.Add(CrearObjeto("palanca", "Palanca de rescate", "Abre las cajas de emergencia selladas de cada misión.", 50,
             new Color(0.5f, 0.55f, 0.6f), Cargar<GameObject>(OBJETOS + "Crowbar.prefab"), PuntoEquipo.Cintura,
             new Vector3(-0.2f, 0f, 0f), new Vector3(0f, 90f, 8f), 0.9f, 0, 0f));
 
-        catalogo.objetos.Add(CrearObjeto("prismaticos", "Prismáticos", "Para ubicar a los heridos desde lejos.", 35,
+        catalogo.objetos.Add(CrearObjeto("prismaticos", "Prismáticos", "Muestran a los pacientes en el mapa.", 35,
             new Color(0.2f, 0.45f, 0.35f), Cargar<GameObject>(OBJETOS + "Binoculars.prefab"), PuntoEquipo.Pecho,
             new Vector3(-0.05f, -0.14f, 0.13f), Vector3.zero, 0.6f, 0, 0f));
 
@@ -894,8 +895,7 @@ public static partial class MontajeRescate
         tmp.fontSize = tamano;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = color;
-        tmp.fontStyle = FontStyles.Bold;
-        tmp.font = Fuente;
+        tmp.font = FuenteCondensada;
         tmp.rectTransform.sizeDelta = new Vector2(8f, 2f);
         return tmp;
     }
@@ -989,8 +989,7 @@ public static partial class MontajeRescate
 
     #region Interfaz
 
-    private static TMP_FontAsset Fuente => Cargar<TMP_FontAsset>("Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset");
-    private static Sprite SpriteRedondeado => AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+    private static Sprite SpriteRedondeado => SpritePanel;
     private static Sprite SpriteCirculo => AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
 
     private static readonly Vector2 Centro = new Vector2(0.5f, 0.5f);
@@ -1038,7 +1037,7 @@ public static partial class MontajeRescate
         {
             imagen.sprite = SpriteRedondeado;
             imagen.type = Image.Type.Sliced;
-            imagen.pixelsPerUnitMultiplier = 0.45f;
+            imagen.pixelsPerUnitMultiplier = 1f;
         }
         return rt.gameObject;
     }
@@ -1060,14 +1059,14 @@ public static partial class MontajeRescate
     {
         RectTransform rt = NuevoRect(padre, nombre, ancla, pos, tam);
         TextMeshProUGUI tmp = rt.gameObject.AddComponent<TextMeshProUGUI>();
-        tmp.font = Fuente;
+        // Los títulos grandes llevan la letra de plantilla; los destacados, la condensada.
+        tmp.font = !negrita ? FuenteTexto : tamano >= 42f ? FuenteTitulo : FuenteCondensada;
         tmp.text = texto;
-        tmp.fontSize = tamano;
+        tmp.fontSize = negrita && tamano < 42f ? tamano * 1.15f : tamano;
         tmp.alignment = alineacion;
         tmp.color = color;
         tmp.raycastTarget = false;
         tmp.textWrappingMode = TextWrappingModes.Normal;
-        if (negrita) tmp.fontStyle = FontStyles.Bold;
         return tmp;
     }
 
@@ -1088,7 +1087,8 @@ public static partial class MontajeRescate
 
         go.AddComponent<BotonMenuFx>();
 
-        TextMeshProUGUI etiqueta = TextoUI(go.transform, "Texto", texto, tamano, Centro, Vector2.zero, tam, TextAlignmentOptions.Center, Color.white, true);
+        Color tinta = Luminancia(color) > 0.5f ? new Color(0.07f, 0.07f, 0.08f) : Color.white;
+        TextMeshProUGUI etiqueta = TextoUI(go.transform, "Texto", texto, tamano, Centro, Vector2.zero, tam, TextAlignmentOptions.Center, tinta, true);
         etiqueta.characterSpacing = 3f;
 
         // AddPersistentListener queda guardado en la escena; onClick.AddListener no.

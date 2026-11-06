@@ -69,7 +69,12 @@ public static partial class MontajeRescate
         libres.AddRange(equipajes);
         libres.AddRange(botiquines);
 
+        Vector3[] cajas = { new Vector3(44f, 0f, -44f), new Vector3(-44f, 0f, -44f), new Vector3(-46f, 0f, 44f) };
+        libres.AddRange(cajas);
+
         Bosque(g.obstaculos, libres);
+
+        foreach (Vector3 caja in cajas) CajaEmergencia(g.obstaculos, caja, caja.x * 2f);
 
         // Puesto de brigadistas al sur.
         Vehiculo("firetruck", e, new Vector3(-7f, 0f, -49f), 80f);

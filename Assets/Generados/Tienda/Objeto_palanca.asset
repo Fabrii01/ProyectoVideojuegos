@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ObjetoTienda
   id: palanca
   nombre: Palanca de rescate
-  descripcion: Sirve para abrir paso entre los escombros.
+  descripcion: "Abre las cajas de emergencia selladas de cada misi\xF3n."
   precio: 50
   colorIcono: {r: 0.5, g: 0.55, b: 0.6, a: 1}
   prefabVisual: {fileID: 7861694621200475968, guid: e8650f681653c044ebb8c523687e3b3d, type: 3}

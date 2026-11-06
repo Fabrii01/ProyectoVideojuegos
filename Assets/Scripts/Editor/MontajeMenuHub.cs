@@ -35,14 +35,14 @@ public static partial class MontajeRescate
         GameObject columna = PanelUI(canvas.transform, "PanelMenuPrincipal", new Vector2(0f, 0.5f), Vector2.zero, new Vector2(700f, 1400f), new Color(0.04f, 0.05f, 0.08f, 0.94f), false);
         control.panelMenuPrincipal = columna;
 
-        GameObject franja = PanelUI(columna.transform, "Franja", new Vector2(1f, 0.5f), Vector2.zero, new Vector2(6f, 1400f), ColNaranja, false);
-        franja.GetComponent<Image>().raycastTarget = false;
+        FranjaPeligro(columna.transform, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(20f, 1400f));
 
-        GameObject etiqueta = PanelUI(columna.transform, "EtiquetaODS", new Vector2(0f, 0.5f), new Vector2(80f, 345f), new Vector2(330f, 42f), new Color(0.13f, 0.6f, 0.45f, 0.95f));
+        GameObject etiqueta = PanelUI(columna.transform, "EtiquetaODS", new Vector2(0f, 0.5f), new Vector2(80f, 352f), new Vector2(330f, 42f), ColRojo);
+        etiqueta.transform.localRotation = Quaternion.Euler(0f, 0f, 2f);
         TextoUI(etiqueta.transform, "Texto", "ODS 3  ·  SALUD Y BIENESTAR", 18f, Centro, Vector2.zero, new Vector2(320f, 40f), TextAlignmentOptions.Center, Color.white, true);
 
-        TextoUI(columna.transform, "TituloA", "OPERACIÓN", 44f, new Vector2(0f, 0.5f), new Vector2(80f, 280f), new Vector2(560f, 58f), TextAlignmentOptions.Left, ColNaranja, true).characterSpacing = 10f;
-        TextoUI(columna.transform, "TituloB", "RESCATE", 104f, new Vector2(0f, 0.5f), new Vector2(76f, 190f), new Vector2(580f, 120f), TextAlignmentOptions.Left, Color.white, true);
+        TextoUI(columna.transform, "TituloA", "OPERACIÓN", 52f, new Vector2(0f, 0.5f), new Vector2(78f, 282f), new Vector2(580f, 66f), TextAlignmentOptions.Left, ColNaranja, true).characterSpacing = 6f;
+        TextoUI(columna.transform, "TituloB", "RESCATE", 116f, new Vector2(0f, 0.5f), new Vector2(74f, 188f), new Vector2(600f, 130f), TextAlignmentOptions.Left, Color.white, true);
         TextoUI(columna.transform, "Subtitulo", "Llega a la zona de desastre, reúne los suministros y salva a quienes te necesitan.", 24f, new Vector2(0f, 0.5f), new Vector2(80f, 96f), new Vector2(540f, 72f), TextAlignmentOptions.TopLeft, ColTextoSuave);
 
         Vector2 izquierda = new Vector2(0f, 0.5f);
@@ -106,17 +106,18 @@ public static partial class MontajeRescate
         control.panelInstrucciones = velo;
 
         GameObject tarjeta = PanelUI(velo.transform, "Tarjeta", Centro, Vector2.zero, new Vector2(1180f, 760f), ColFondo);
+        Cinta(tarjeta.transform, 1180f);
         TextoUI(tarjeta.transform, "Titulo", "CÓMO JUGAR", 44f, new Vector2(0.5f, 1f), new Vector2(0f, -34f), new Vector2(1000f, 60f), TextAlignmentOptions.Center, Color.white, true);
 
         string mision =
-            "<b><color=#F28019>TU MISIÓN</color></b>\n\n" +
+            "<b><color=#FFBC0A>TU MISIÓN</color></b>\n\n" +
             "Habla con el médico del Hub y elige una misión.\n\n" +
             "Busca <b>jeringas</b> y <b>equipajes de salud</b> y llévalos al paciente.\n\n" +
             "Junta <b>monedas</b> por el mapa y gástalas en la tienda del Hub.\n\n" +
             "Evita el fuego y a los <b>saqueadores</b>: si te ven, te persiguen. Escóndete o defiéndete con un arma de la tienda.";
 
         string controles =
-            "<b><color=#F28019>CONTROLES</color></b>\n\n" +
+            "<b><color=#FFBC0A>CONTROLES</color></b>\n\n" +
             "<b>W A S D</b>   Caminar\n\n" +
             "<b>Shift</b>   Correr\n\n" +
             "<b>Espacio</b>   Saltar\n\n" +
@@ -337,8 +338,7 @@ public static partial class MontajeRescate
         panel.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 0f);
         panel.GetComponent<Image>().raycastTarget = false;
 
-        GameObject franja = PanelUI(panel.transform, "Franja", new Vector2(0f, 0.5f), new Vector2(0f, 0f), new Vector2(10f, 170f), ColNaranja);
-        franja.GetComponent<Image>().raycastTarget = false;
+        FranjaPeligro(panel.transform, new Vector2(0.5f, 1f), new Vector2(8f, 0f), new Vector2(1140f, 12f));
 
         dialogo.panel = panel;
         dialogo.textoNombre = TextoUI(panel.transform, "Nombre", "Nombre", 28f, new Vector2(0f, 1f), new Vector2(40f, -18f), new Vector2(1000f, 36f), TextAlignmentOptions.Left, ColNaranja, true);
@@ -368,6 +368,7 @@ public static partial class MontajeRescate
     {
         GameObject velo = Velo(canvas, "PanelNiveles", new Color(0.02f, 0.03f, 0.05f, 0.78f));
         GameObject tarjeta = PanelUI(velo.transform, "Tarjeta", Centro, Vector2.zero, new Vector2(1420f, 800f), ColFondo);
+        Cinta(tarjeta.transform, 1420f);
 
         TextoUI(tarjeta.transform, "Antetitulo", "CENTRAL DE EMERGENCIAS", 22f, new Vector2(0f, 1f), new Vector2(60f, -38f), new Vector2(800f, 32f), TextAlignmentOptions.Left, ColNaranja, true).characterSpacing = 5f;
         TextoUI(tarjeta.transform, "Titulo", "Elige tu misión", 52f, new Vector2(0f, 1f), new Vector2(58f, -70f), new Vector2(900f, 70f), TextAlignmentOptions.Left, Color.white, true);
@@ -378,7 +379,7 @@ public static partial class MontajeRescate
         TarjetaMision(tarjeta.transform, 2, 0f, "Incendio en la reserva",
             "El fuego avanza. Cruza el río y atiende una intoxicación por humo y un golpe de calor.",
             "Alta", "90 monedas", new Color(0.72f, 0.2f, 0.12f), gestor);
-        TarjetaMision(tarjeta.transform, 3, 440f, "Emergencia en la base Selene",
+        TarjetaMision(tarjeta.transform, 3, 440f, "Emergencia en Selene",
             "Meteoritos sobre la base lunar. Dos pacientes, gravedad baja y androides averiados.",
             "Muy alta", "150 monedas", new Color(0.24f, 0.3f, 0.62f), gestor);
 
@@ -418,6 +419,7 @@ public static partial class MontajeRescate
     {
         // Ocupa la derecha para que el jugador vea su personaje mientras compra.
         GameObject panel = PanelUI(canvas, "PanelTienda", new Vector2(1f, 0.5f), new Vector2(-30f, -20f), new Vector2(880f, 960f), ColFondo);
+        Cinta(panel.transform, 880f);
 
         TextoUI(panel.transform, "Antetitulo", "PUESTO DE SUMINISTROS", 20f, new Vector2(0f, 1f), new Vector2(40f, -30f), new Vector2(560f, 30f), TextAlignmentOptions.Left, ColOro, true).characterSpacing = 5f;
         TextoUI(panel.transform, "Titulo", "Equípate", 46f, new Vector2(0f, 1f), new Vector2(38f, -58f), new Vector2(560f, 62f), TextAlignmentOptions.Left, Color.white, true);

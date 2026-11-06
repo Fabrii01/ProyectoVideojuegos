@@ -40,7 +40,7 @@ public static partial class MontajeRescate
             gravedad = -5f,
             avisos = new[]
             {
-                "Base Selene, emergencia. Tras los meteoritos hay un caso de hipoxia y uno de descompresión.",
+                "Base Selene, emergencia. Hay un caso de hipoxia al oeste y uno de descompresión al este.",
                 "Aquí la gravedad es baja: saltas más alto. Si ves una marca roja en el suelo, apártate."
             },
             leccion = "en un espacio cerrado sin aire seguro, sal con calma y sigue las rutas de evacuación. Revisar el equipo salva vidas.",
@@ -94,7 +94,11 @@ public static partial class MontajeRescate
         libres.AddRange(equipajes);
         libres.AddRange(botiquines);
         libres.AddRange(pacientes);
+
+        Vector3[] cajas = { new Vector3(-50f, 0f, -46f), new Vector3(50f, 0f, -30f), new Vector3(34f, 0f, 46f) };
+        libres.AddRange(cajas);
         ConstruirSuperficieLunar(g.obstaculos, libres);
+        foreach (Vector3 caja in cajas) CajaEmergencia(g.obstaculos, caja, caja.z * 3f);
 
         // Fugas de plasma junto a los módulos dañados.
         foreach (Vector3 lugar in new[] { new Vector3(-10f, 0f, -14f), new Vector3(11f, 0f, -14f), new Vector3(-21f, 0f, -6f), new Vector3(23f, 0f, -4f), new Vector3(-40f, 0f, 30f), new Vector3(40f, 0f, 30f), new Vector3(0f, 0f, 26f) })

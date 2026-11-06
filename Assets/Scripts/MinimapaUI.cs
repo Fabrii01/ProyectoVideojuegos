@@ -3,8 +3,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Mapa del nivel en la esquina superior derecha. Muestra al jugador, los enemigos,
-/// los suministros, las monedas y al paciente. Las marcas desaparecen al recoger cada cosa.
+/// Mapa del nivel en la esquina superior derecha. Muestra al jugador, los enemigos, los suministros
+/// y las monedas. Con prismáticos muestra a los pacientes, y con la palanca, las cajas selladas.
 /// </summary>
 public class MinimapaUI : MonoBehaviour
 {
@@ -13,6 +13,7 @@ public class MinimapaUI : MonoBehaviour
         public Transform objetivo;
         public RectTransform icono;
         public EnemigoPatrulla enemigo;
+        public CajaSellada caja;
     }
 
     public RectTransform area;
@@ -32,6 +33,11 @@ public class MinimapaUI : MonoBehaviour
     public Color colorEquipaje = new Color(1f, 0.6f, 0.15f);
     public Color colorBotiquin = new Color(0.3f, 1f, 0.45f);
     public Color colorMoneda = new Color(1f, 0.85f, 0.25f);
+    public Color colorCaja = new Color(0.8f, 0.45f, 1f);
+
+    [Header("Leyenda según el equipo")]
+    public GameObject leyendaPaciente;
+    public GameObject leyendaCaja;
 
     private readonly List<Marca> marcas = new List<Marca>();
     private RectTransform flechaJugador;
@@ -48,8 +54,26 @@ public class MinimapaUI : MonoBehaviour
             Agregar(item.transform, spritePunto, ColorDeItem(item.tipoItem), 12f);
         }
 
-        Paciente paciente = FindAnyObjectByType<Paciente>();
-        if (paciente != null) Agregar(paciente.transform, spriteCruz, Color.white, 20f);
+        bool veoPacientes = DatosJugador.EstaEquipado("prismaticos");
+        bool veoCajas = DatosJugador.EstaEquipado("palanca");
+        if (leyendaPaciente != null) leyendaPaciente.SetActive(veoPacientes);
+        if (leyendaCaja != null) leyendaCaja.SetActive(veoCajas);
+
+        if (veoPacientes)
+        {
+            foreach (Paciente paciente in FindObjectsByType<Paciente>(FindObjectsInactive.Exclude))
+            {
+                Agregar(paciente.transform, spriteCruz, Color.white, 20f);
+            }
+        }
+
+        if (veoCajas)
+        {
+            foreach (CajaSellada caja in FindObjectsByType<CajaSellada>(FindObjectsInactive.Exclude))
+            {
+                Agregar(caja.transform, spritePunto, colorCaja, 12f).caja = caja;
+            }
+        }
 
         foreach (EnemigoPatrulla enemigo in FindObjectsByType<EnemigoPatrulla>(FindObjectsInactive.Exclude))
         {
@@ -104,7 +128,8 @@ public class MinimapaUI : MonoBehaviour
             Marca marca = marcas[i];
 
             // Si el objeto ya no existe es porque se recogió o porque cayó el enemigo.
-            if (marca.objetivo == null || (marca.enemigo != null && marca.enemigo.EstaDerrotado))
+            bool cajaAbierta = marca.caja != null && marca.caja.Abierta;
+            if (marca.objetivo == null || cajaAbierta || (marca.enemigo != null && marca.enemigo.EstaDerrotado))
             {
                 Destroy(marca.icono.gameObject);
                 marcas.RemoveAt(i);

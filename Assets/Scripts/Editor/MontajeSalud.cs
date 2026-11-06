@@ -90,10 +90,10 @@ public static partial class MontajeRescate
         grupo.interactable = false;
 
         Image fondo = raiz.gameObject.AddComponent<Image>();
-        fondo.color = new Color(0.55f, 0.06f, 0.05f, 0.92f);
+        fondo.color = ColRojo;
         fondo.sprite = SpriteRedondeado;
         fondo.type = Image.Type.Sliced;
-        fondo.pixelsPerUnitMultiplier = 0.45f;
+        fondo.pixelsPerUnitMultiplier = 1f;
         fondo.raycastTarget = false;
 
         AvisoCentral aviso = raiz.gameObject.AddComponent<AvisoCentral>();
@@ -116,6 +116,7 @@ public static partial class MontajeRescate
         ficha.panel = velo;
 
         GameObject tarjeta = PanelUI(velo.transform, "Tarjeta", Centro, Vector2.zero, new Vector2(1100f, 760f), ColFondo);
+        Cinta(tarjeta.transform, 1100f);
 
         TextoUI(tarjeta.transform, "Antetitulo", "FICHA MÉDICA", 22f, new Vector2(0.5f, 1f), new Vector2(0f, -34f), new Vector2(1000f, 32f), TextAlignmentOptions.Center, ColVerde, true).characterSpacing = 6f;
         ficha.textoNombre = TextoUI(tarjeta.transform, "Nombre", "", 46f, new Vector2(0.5f, 1f), new Vector2(0f, -68f), new Vector2(1020f, 64f), TextAlignmentOptions.Center, Color.white, true);
@@ -134,6 +135,7 @@ public static partial class MontajeRescate
     {
         GameObject velo = Velo(canvas, "PanelPreguntas", new Color(0.02f, 0.03f, 0.05f, 0.8f));
         GameObject tarjeta = PanelUI(velo.transform, "Tarjeta", Centro, Vector2.zero, new Vector2(1240f, 820f), ColFondo);
+        Cinta(tarjeta.transform, 1240f);
 
         PreguntasUI preguntas = velo.AddComponent<PreguntasUI>();
         preguntas.banco = Cargar<BancoSalud>(DIR_SALUD + "/BancoSalud.asset");

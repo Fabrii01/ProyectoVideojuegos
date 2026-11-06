@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ObjetoTienda
   id: prismaticos
   nombre: "Prism\xE1ticos"
-  descripcion: Para ubicar a los heridos desde lejos.
+  descripcion: Muestran a los pacientes en el mapa.
   precio: 35
   colorIcono: {r: 0.2, g: 0.45, b: 0.35, a: 1}
   prefabVisual: {fileID: 2762118618844980087, guid: feda0d677f60e87469cb9da36fbe622b, type: 3}
